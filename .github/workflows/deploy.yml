@@ -40,18 +40,28 @@ jobs:
         SSH_HOST: ${{ secrets.SSH_HOST }}
         SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       run: |
+        # Копируем ТОЛЬКО собранную папку dist и необходимые файлы
         rsync -avz --delete \
           --exclude 'node_modules' \
           --exclude '.git' \
           --exclude '.env' \
+          --exclude 'js/' \
+          --exclude 'public/' \
+          --exclude 'functions/' \
+          --exclude 'extensions/' \
+          --exclude 'scripts/' \
           ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/barashka
 
+        # На сервере НЕ собираем, а только проверяем что dist на месте
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ~/barashka
 
-          npm ci --production
-          npm run build:web
+          # Проверяем что dist существует
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist directory not found!"
+            exit 1
+          fi
 
-          pm2 restart barashka || pm2 start npm --name barashka -- run preview -- --port 3000 --host 0.0.0.0
-          pm2 save
+          # Если нужно - перезапускаем (но для статики это не требуется)
+          # pm2 restart barashka 2>/dev/null || true
         EOF
