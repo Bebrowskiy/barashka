@@ -38,7 +38,6 @@ export class AuthManager {
 
     onAuthStateChanged(callback) {
         this.authListeners.push(callback);
-        // If we already have a user state, trigger immediately
         if (this.user !== null) {
             callback(this.user);
         }
@@ -88,8 +87,6 @@ export class AuthManager {
             await auth.createRecovery(email, window.location.origin + '/reset-password.html');
             alert(`Password reset email sent to ${email}`);
         } catch (error) {
-            console.error('[AuthManager] Password reset failed:', error);
-            alert(`Failed to send reset email: ${error.message}`);
             throw error;
         }
     }

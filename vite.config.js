@@ -18,14 +18,14 @@ export default defineConfig(({ mode }) => {
         },
         server: {
             host: true,
-            // allowedHosts: ['396f-109-61-46-145.ngrok-free.app'],
+            allowedHosts: ['12ea-109-61-46-145.ngrok-free.app'],
             fs: {
                 allow: ['.', 'node_modules'],
             },
         },
         preview: {
             host: true,
-            // allowedHosts: ['396f-109-61-46-145.ngrok-free.app'],
+            allowedHosts: ['12ea-109-61-46-145.ngrok-free.app'],
         },
         build: {
             outDir: 'dist',

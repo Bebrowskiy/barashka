@@ -25,8 +25,26 @@ export default function authGatePlugin() {
     return {
         name: 'auth-gate',
 
-        config(_, { mode }) {
+        config(config, { mode }) {
             env = loadEnv(mode, process.cwd(), '');
+
+            // Define global constants that will be replaced at build time
+            const define = {};
+
+            if (env.POCKETBASE_URL) {
+                define['__POCKETBASE_URL__'] = JSON.stringify(env.POCKETBASE_URL);
+            }
+
+            if (env.FIREBASE_CONFIG) {
+                try {
+                    const parsed = JSON.parse(env.FIREBASE_CONFIG);
+                    define['__FIREBASE_CONFIG__'] = JSON.stringify(parsed);
+                } catch (e) {
+                    console.error('Invalid FIREBASE_CONFIG JSON:', e.message);
+                }
+            }
+
+            return { define };
         },
 
         configurePreviewServer(server) {

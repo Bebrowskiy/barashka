@@ -1,10 +1,5 @@
 // js/accounts/config.js
 // Firebase Authentication Configuration
-// 
-// IMPORTANT: For production, configure Firebase via environment variables:
-// 1. Copy .env.example to .env
-// 2. Set FIREBASE_CONFIG in .env with your Firebase credentials
-// 3. Never commit Firebase credentials to version control
 
 import { initializeApp } from 'firebase/app';
 import {
@@ -20,15 +15,10 @@ import {
 
 const STORAGE_KEY = 'monochrome-firebase-config';
 
-/**
- * Default Firebase configuration
- * Replace with your own Firebase project credentials
- * Get these from: Firebase Console > Project Settings > General > Your apps > SDK setup and configuration
- */
 const DEFAULT_CONFIG = {
-    apiKey: 'YOUR_API_KEY', // Replace with your Firebase API key
-    authDomain: 'YOUR_PROJECT.firebaseapp.com', // Replace with your Firebase project
-    projectId: 'YOUR_PROJECT_ID', // Replace with your Firebase project ID
+    apiKey: 'YOUR_API_KEY',
+    authDomain: 'YOUR_PROJECT.firebaseapp.com',
+    projectId: 'YOUR_PROJECT_ID',
     storageBucket: 'YOUR_PROJECT.firebasestorage.app',
     messagingSenderId: 'YOUR_SENDER_ID',
     appId: 'YOUR_APP_ID',
@@ -43,12 +33,22 @@ try {
         firebaseConfig = JSON.parse(stored);
     }
 } catch (e) {
-    // Silent fail - use default config
+    // Silent fail
 }
 
-// Allow override from window (for auth gate injection)
-// This is set by vite-plugin-auth-gate.js from FIREBASE_CONFIG environment variable
-if (window.__FIREBASE_CONFIG__) {
+// Allow override from Vite define (from .env)
+try {
+    // eslint-disable-next-line no-undef
+    if (typeof __FIREBASE_CONFIG__ !== 'undefined') {
+        // eslint-disable-next-line no-undef
+        firebaseConfig = __FIREBASE_CONFIG__;
+    }
+} catch (e) {
+    // Ignore
+}
+
+// Fallback to window injection (preview server)
+if (typeof window !== 'undefined' && window.__FIREBASE_CONFIG__) {
     firebaseConfig = window.__FIREBASE_CONFIG__;
 }
 
@@ -56,17 +56,14 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 
-// Wrapper to match old Appwrite API
 export const authWrapper = {
-    async createOAuth2Session(providerName, successUrl, failureUrl) {
+    async createOAuth2Session(_providerName, successUrl, failureUrl) {
         try {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
-            // Redirect with user info
             const token = await user.getIdToken();
             window.location.href = `${successUrl}&userId=${user.uid}&secret=${token}`;
         } catch (error) {
-            console.error('[Firebase] OAuth error:', error);
             window.location.href = `${failureUrl}?error=${encodeURIComponent(error.message)}`;
         }
     },
@@ -82,17 +79,17 @@ export const authWrapper = {
     },
 
     async createRecovery(email, redirectUrl) {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, email, redirectUrl);
     },
 
-    async deleteSession(sessionId) {
+    async deleteSession(_sessionId) {
         await signOut(auth);
     },
 
     async get() {
         return new Promise((resolve, reject) => {
             const unsubscribe = onAuthStateChanged(auth, (user) => {
-                unsubscribe(); // Clean up listener
+                unsubscribe();
                 if (user) {
                     resolve({
                         $id: user.uid,
@@ -107,7 +104,6 @@ export const authWrapper = {
         });
     },
 
-    // Direct access to Firebase auth
     getFirebaseAuth() {
         return auth;
     },
