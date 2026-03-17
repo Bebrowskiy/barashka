@@ -1,0 +1,67 @@
+name: Deploy to VDS
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build:web
+      env:
+        NODE_ENV: production
+
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+
+    - name: Add server to known_hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to VDS
+      env:
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      run: |
+        # Копируем ТОЛЬКО собранную папку dist и необходимые файлы
+        rsync -avz --delete \
+          --exclude 'node_modules' \
+          --exclude '.git' \
+          --exclude '.env' \
+          --exclude 'js/' \
+          --exclude 'public/' \
+          --exclude 'functions/' \
+          --exclude 'extensions/' \
+          --exclude 'scripts/' \
+          ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/barashka
+
+        # На сервере НЕ собираем, а только проверяем что dist на месте
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd ~/barashka
+
+          # Проверяем что dist существует
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist directory not found!"
+            exit 1
+          fi
+
+          # Если нужно - перезапускаем (но для статики это не требуется)
+          # pm2 restart barashka 2>/dev/null || true
+        EOF
