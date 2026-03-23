@@ -1,0 +1,61 @@
+﻿cargo :     Updating c
+rates.io index
+строка:1 знак:1
++ cargo check 2>&1 | O
+ut-File check_err2.txt
+ -Encoding utf8
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (    Updati   
+ ng crates.io inde    
+x:String) [], Rem    o
+teException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+     Locking 2 package
+s to latest compatible
+ versions
+      Adding discord-r
+ich-presence v0.2.5 (a
+vailable: v1.1.0)
+      Adding uuid v0.8
+.2
+ Downloading crates ..
+.
+  Downloaded discord-r
+ich-presence v0.2.5
+  Downloaded uuid v0.8
+.2
+    Checking getrandom
+ v0.2.17
+    Checking uuid v0.8
+.2
+    Checking discord-r
+ich-presence v0.2.5
+    Checking app v0.1.
+0 (C:\Users\User\Docum
+ents\monochrome\src-ta
+uri)
+warning: unused import
+: `Manager`
+ --> src\lib.rs:3:20
+  |
+3 | use tauri::{State,
+ Manager};
+  |                   
+ ^^^^^^^
+  |
+  = note: `#[warn(unus
+ed_imports)]` (part of
+ `#[warn(unused)]`) on
+ by default
+
+warning: `app` (lib) g
+enerated 1 warning
+    Finished `dev` pro
+file [unoptimized + de
+buginfo] target(s) in 
+19.24s

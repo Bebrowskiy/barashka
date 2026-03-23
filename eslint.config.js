@@ -10,8 +10,7 @@ export default [
             '**/legacy/**',
             '**/bin/**',
             '**/www/**',
-            '**/public/lib/**',
-            '**/public/neutralino.js',
+            '**/public/lib/**'
         ],
     },
     js.configs.recommended,
@@ -23,7 +22,6 @@ export default [
             globals: {
                 ...globals.browser,
                 ...globals.node,
-                Neutralino: 'readonly',
             },
         },
         rules: {

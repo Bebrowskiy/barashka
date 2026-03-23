@@ -20,6 +20,7 @@ import {
 } from './storage.js';
 import { audioContextManager } from './audio-context.js';
 import { crossfadeManager, initCrossfadeManager } from './crossfade.js';
+import { initDiscordRpc } from './discord-rpc.js';
 
 export class Player {
     constructor(audioElement, api, quality = 'HI_RES_LOSSLESS') {
@@ -59,6 +60,9 @@ export class Player {
         // Initialize crossfade manager
         this.crossfadeManager = initCrossfadeManager(this.audio);
         this.loadCrossfadeSettings();
+
+        // Initialize Discord RPC
+        initDiscordRpc(this);
 
         // Listen for crossfade settings changes
         window.addEventListener('crossfadeSettingsChange', () => {
@@ -153,26 +157,13 @@ export class Player {
     }
 
     applyAudioEffects() {
+        if (!this.audio) return;
+
         const speed = audioEffectsSettings.getSpeed();
-
-        if (this.dashInitialized && this.dashPlayer) {
-            if (this.dashPlayer.getPlaybackRate() !== speed) {
-                this.dashPlayer.setPlaybackRate(speed);
-            }
-        } else {
-            if (this.audio.playbackRate !== speed) {
-                this.audio.playbackRate = speed;
-            }
-        }
-
         const preservePitch = audioEffectsSettings.isPreservePitchEnabled();
-        if (this.audio.preservesPitch !== preservePitch) {
-            this.audio.preservesPitch = preservePitch;
-            // Firefox support
-            if (this.audio.mozPreservesPitch !== undefined) {
-                this.audio.mozPreservesPitch = preservePitch;
-            }
-        }
+
+        this.audio.playbackRate = speed;
+        this.audio.preservesPitch = preservePitch;
     }
 
     setPlaybackSpeed(speed) {
@@ -1234,15 +1225,7 @@ export class Player {
     }
 
     async updateNativeWindow(track) {
-        if (!window.Neutralino) return;
-
-        const trackTitle = getTrackTitle(track);
-        const artist = getTrackArtists(track);
-        try {
-            await Neutralino.window.setTitle(`${trackTitle} • ${artist}`);
-        } catch (e) {
-            console.error('Failed to set window title:', e);
-        }
+        // Native window updating will be re-implemented for Electron later
     }
 
     // ========================================================================

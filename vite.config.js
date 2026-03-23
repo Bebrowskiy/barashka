@@ -1,13 +1,11 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import neutralino from 'vite-plugin-neutralino';
 import authGatePlugin from './vite-plugin-auth-gate.js';
 
 export default defineConfig(({ mode }) => {
-    const IS_NEUTRALINO = mode === 'neutralino';
-
     return {
-        base: IS_NEUTRALINO ? './' : '/',
+        clearScreen: false,
+        base: '/',
         resolve: {
             alias: {
                 pocketbase: '/node_modules/pocketbase/dist/pocketbase.es.js',
@@ -18,6 +16,8 @@ export default defineConfig(({ mode }) => {
         },
         server: {
             host: true,
+            port: 4173,
+            strictPort: true,
             allowedHosts: ['12ea-109-61-46-145.ngrok-free.app'],
             fs: {
                 allow: ['.', 'node_modules'],
@@ -32,7 +32,6 @@ export default defineConfig(({ mode }) => {
             emptyOutDir: true,
         },
         plugins: [
-            IS_NEUTRALINO && neutralino(),
             authGatePlugin(),
             VitePWA({
                 registerType: 'prompt',

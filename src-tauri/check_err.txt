@@ -1,0 +1,84 @@
+﻿cargo :     Checking a
+pp v0.1.0 (C:\Users\Us
+er\Documents\monochrom
+e\src-tauri)
+строка:1 знак:1
++ cargo check 2>&1 | O
+ut-File check_err.txt 
+-Encoding utf8
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (    Checki   
+ ng ap...rome\src-    
+tauri):String) []    ,
+ RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+error[E0432]: unresolv
+ed import `discord_ric
+h_presence`
+ --> src\lib.rs:1:5
+  |
+1 | use discord_rich_p
+resence::{activity, Di
+scordIpc, DiscordIpcCl
+ient};
+  |     ^^^^^^^^^^^^^^
+^^^^^^^ use of unresol
+ved module or unlinked
+ crate `discord_rich_p
+resence`
+  |
+  = help: if you wante
+d to use a crate named
+ `discord_rich_presenc
+e`, use `cargo add dis
+cord_rich_presence` to
+ add it to your `Cargo
+.toml`
+
+error[E0282]: type ann
+otations needed
+  --> src\lib.rs:23:16
+   |
+23 |             if ne
+w_client.connect().is_
+ok() {
+   |                ^^
+^^^^^^^^ cannot infer 
+type
+
+error[E0282]: type ann
+otations needed
+  --> src\lib.rs:61:17
+   |
+61 |         let _ = c
+lient.set_activity(act
+);
+   |                 ^
+^^^^^ cannot infer typ
+e
+
+error[E0282]: type ann
+otations needed
+  --> src\lib.rs:70:17
+   |
+70 |         let _ = c
+lient.clear_activity()
+;
+   |                 ^
+^^^^^ cannot infer typ
+e
+
+Some errors have detai
+led explanations: E028
+2, E0432.
+For more information a
+bout an error, try `ru
+stc --explain E0282`.
+error: could not compi
+le `app` (lib) due to 
+4 previous errors

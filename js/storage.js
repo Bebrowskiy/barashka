@@ -481,7 +481,6 @@ export const dynamicColorSettings = {
             return true;
         }
     },
-
     setEnabled(enabled) {
         localStorage.setItem(this.STORAGE_KEY, enabled ? 'true' : 'false');
     },
