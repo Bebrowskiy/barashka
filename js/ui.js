@@ -38,8 +38,8 @@ import { getVibrantColorFromImage } from './vibrant-color.js';
 import { syncManager } from './accounts/pocketbase.js';
 import { Visualizer } from './visualizer.js';
 import { navigate } from './router.js';
+import { GuessTheTrackGame } from './guess-the-track.js';
 import {
-    renderUnreleasedPage as renderUnreleasedTrackerPage,
     renderTrackerArtistPage as renderTrackerArtistContent,
     renderTrackerProjectPage as renderTrackerProjectContent,
     renderTrackerTrackPage as renderTrackerTrackContent,
@@ -4050,10 +4050,17 @@ export class UIRenderer {
         }
     }
 
-    async renderUnreleasedPage() {
-        this.showPage('unreleased');
-        const container = document.getElementById('unreleased-content');
-        await renderUnreleasedTrackerPage(container);
+    async renderGuessTrackPage() {
+        this.showPage('guess-the-track');
+        const container = document.getElementById('guess-the-track-content');
+        if (!container) return;
+        
+        if (!this.guessTheTrackGame) {
+            this.guessTheTrackGame = new GuessTheTrackGame(this, this.player, db);
+        }
+        
+        // Always initialize to reset UI state
+        await this.guessTheTrackGame.init(container);
     }
 
     async renderTrackerArtistPage(sheetId) {

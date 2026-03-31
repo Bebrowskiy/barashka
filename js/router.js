@@ -87,19 +87,8 @@ export function createRouter(ui) {
             case 'recent':
                 await ui.renderRecentPage();
                 break;
-            case 'unreleased':
-                if (param) {
-                    const parts = param.split('/');
-                    const sheetId = parts[0];
-                    const projectName = parts[1] ? decodeURIComponent(parts[1]) : null;
-                    if (projectName) {
-                        await ui.renderTrackerProjectPage(sheetId, projectName);
-                    } else {
-                        await ui.renderTrackerArtistPage(sheetId);
-                    }
-                } else {
-                    await ui.renderUnreleasedPage();
-                }
+            case 'guess-the-track':
+                await ui.renderGuessTrackPage();
                 break;
             case 'home':
                 await ui.renderHomePage();

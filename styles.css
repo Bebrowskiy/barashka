@@ -8474,3 +8474,41 @@ textarea:focus {
     margin-bottom: 0;
     padding-bottom: 0;
 }
+
+/* ============================================================================
+   TIKTOK MODE
+   ============================================================================ */
+
+#tiktok-mode-btn,
+#fs-tiktok-mode-btn {
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+#tiktok-mode-btn.active,
+#fs-tiktok-mode-btn.active {
+    opacity: 1;
+    color: #ff0050;
+    filter: drop-shadow(2px 2px 0px #00f2fe) drop-shadow(-2px -2px 0px #ff0050);
+    animation: tiktok-pulse 1.5s infinite alternate ease-in-out;
+}
+
+body.tiktok-mode-active .now-playing-bar .cover,
+body.tiktok-mode-active #fullscreen-cover-image {
+    animation: tiktok-glitch-cover 3s infinite linear;
+    box-shadow: 0 0 30px rgba(255, 0, 80, 0.4), 0 0 50px rgba(0, 242, 254, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes tiktok-pulse {
+    0% { transform: scale(1); filter: drop-shadow(2px 2px 0px #00f2fe) drop-shadow(-2px -2px 0px #ff0050); }
+    100% { transform: scale(1.1); filter: drop-shadow(3px 3px 2px #00f2fe) drop-shadow(-3px -3px 2px #ff0050); }
+}
+
+@keyframes tiktok-glitch-cover {
+    0% { filter: hue-rotate(0deg) contrast(1.1) brightness(1.1); transform: scale(1); }
+    33% { filter: hue-rotate(5deg) contrast(1.2) brightness(1.15); transform: scale(1.02); }
+    66% { filter: hue-rotate(-5deg) contrast(1.1) brightness(1.1); transform: scale(0.98); }
+    100% { filter: hue-rotate(0deg) contrast(1.1) brightness(1.1); transform: scale(1); }
+}
+

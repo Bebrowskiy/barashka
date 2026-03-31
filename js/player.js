@@ -21,6 +21,7 @@ import {
 import { audioContextManager } from './audio-context.js';
 import { crossfadeManager, initCrossfadeManager } from './crossfade.js';
 import { initDiscordRpc } from './discord-rpc.js';
+import { tiktokModeManager } from './audio/tiktok-mode.js';
 
 export class Player {
     constructor(audioElement, api, quality = 'HI_RES_LOSSLESS') {
@@ -61,8 +62,10 @@ export class Player {
         this.crossfadeManager = initCrossfadeManager(this.audio);
         this.loadCrossfadeSettings();
 
-        // Initialize Discord RPC
-        initDiscordRpc(this);
+        // Initialize TikTok mode
+        tiktokModeManager.setPlayer(this);
+
+        // Discord RPC будет инициализирован в event.js после установки window.__barashkaPlayer
 
         // Listen for crossfade settings changes
         window.addEventListener('crossfadeSettingsChange', () => {
@@ -159,8 +162,13 @@ export class Player {
     applyAudioEffects() {
         if (!this.audio) return;
 
-        const speed = audioEffectsSettings.getSpeed();
-        const preservePitch = audioEffectsSettings.isPreservePitchEnabled();
+        let speed = audioEffectsSettings.getSpeed();
+        let preservePitch = audioEffectsSettings.isPreservePitchEnabled();
+
+        if (tiktokModeManager.isEnabled()) {
+            speed = Math.max(speed, 1.25);
+            preservePitch = false;
+        }
 
         this.audio.playbackRate = speed;
         this.audio.preservesPitch = preservePitch;

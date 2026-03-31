@@ -285,6 +285,11 @@
                                     <path d="M2 22h.01"></path>
                                 </svg>
                             </button>
+                            <button id="fs-tiktok-mode-btn" class="btn-icon" title="TikTok Mode">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+                                </svg>
+                            </button>
                             <button id="fs-queue-btn" class="btn-icon" title="Queue">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -2085,7 +2090,7 @@
                                 </a>
                             </li>
                             <li class="nav-item" id="sidebar-nav-unreleased">
-                                <a href="/unreleased">
+                                <a href="/guess-the-track">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         width="24"
@@ -2097,12 +2102,11 @@
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                     >
-                                        <rect x="3" y="3" width="7" height="7" />
-                                        <rect x="14" y="3" width="7" height="7" />
-                                        <rect x="14" y="14" width="7" height="7" />
-                                        <rect x="3" y="14" width="7" height="7" />
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                        <line x1="12" y1="17" x2="12.01" y2="17" />
                                     </svg>
-                                    <span data-i18n="nav-unreleased">Unreleased</span>
+                                    <span data-i18n="nav-unreleased">Guess the Track</span>
                                 </a>
                             </li>
                             <li class="nav-item" id="sidebar-nav-settings">
@@ -2797,8 +2801,8 @@
                     <div class="track-list" id="recent-tracks-container"></div>
                 </div>
 
-                <div id="page-unreleased" class="page">
-                    <div id="unreleased-content" style="padding: 1rem 0"></div>
+                <div id="page-guess-the-track" class="page" style="height: 100%; padding: 0;">
+                    <div id="guess-the-track-content" style="width: 100%; height: 100%;"></div>
                 </div>
 
                 <div id="page-tracker-artist" class="page">
@@ -5688,7 +5692,14 @@
                                 style="margin: 0.25rem 0; color: var(--on-surface-variant, #666)"
                                 data-i18n="about-copyright"
                             >
-                                Copyright 2026 Barashka-Team
+                                Copyright 2026
+                                <a
+                                    href="https://github.com/Bebrowskiy"
+                                    target="_blank"
+                                    style="color: var(--primary, #6366f1); text-decoration: none"
+                                    data-i18n="about-monochrome-link"
+                                    >Bebrowskiy</a
+                                >
                             </p>
                             <p style="margin: 0.25rem 0">
                                 <a
@@ -6126,6 +6137,11 @@
                             >
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12,6 12,12 16,14" />
+                            </svg>
+                        </button>
+                        <button id="tiktok-mode-btn" title="TikTok Mode">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
                             </svg>
                         </button>
                         <button id="queue-btn" title="Queue">

@@ -95,6 +95,8 @@ class AudioContextManager {
         this.isEQEnabled = false;
         this.isMonoAudioEnabled = false;
         this.monoMergerNode = null;
+        this.tiktokConvolver = null;
+        this.isTikTokEnabled = false;
         this.audio = null;
         this.currentVolume = 1.0;
 
@@ -378,6 +380,13 @@ class AudioContextManager {
                     /* ignore */
                 }
             }
+            if (this.tiktokConvolver) {
+                try {
+                    this.tiktokConvolver.disconnect();
+                } catch {
+                    /* ignore */
+                }
+            }
 
             let lastNode = this.source;
 
@@ -393,6 +402,8 @@ class AudioContextManager {
                 console.log('[AudioContext] Mono audio enabled');
             }
 
+            let nextToLastNode = lastNode;
+
             if (this.isEQEnabled && this.filters.length > 0) {
                 for (let i = 0; i < this.filters.length - 1; i++) {
                     this.filters[i].connect(this.filters[i + 1]);
@@ -404,10 +415,16 @@ class AudioContextManager {
                     lastNode.connect(this.filters[0]);
                 }
                 this.filters[this.filters.length - 1].connect(this.outputNode);
-                this.outputNode.connect(this.analyser);
+                nextToLastNode = this.outputNode;
                 console.log('[AudioContext] EQ connected');
+            }
+
+            if (this.isTikTokEnabled && this.tiktokConvolver) {
+                nextToLastNode.connect(this.tiktokConvolver);
+                this.tiktokConvolver.connect(this.analyser);
+                console.log('[AudioContext] TikTok Convolver connected');
             } else {
-                lastNode.connect(this.analyser);
+                nextToLastNode.connect(this.analyser);
             }
 
             this.analyser.connect(this.volumeNode);
@@ -498,6 +515,21 @@ class AudioContextManager {
 
     isMonoAudioActive() {
         return this.isInitialized && this.isMonoAudioEnabled;
+    }
+
+    setTikTokConvolver(convolverNode) {
+        this.tiktokConvolver = convolverNode;
+        if (this.isInitialized) {
+            this._connectGraph();
+        }
+    }
+
+    toggleTikTokMode(enabled) {
+        this.isTikTokEnabled = enabled;
+        if (this.isInitialized) {
+            this._connectGraph();
+        }
+        return this.isTikTokEnabled;
     }
 
     getRange() {

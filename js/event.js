@@ -17,6 +17,7 @@ import { showNotification, downloadTrackWithMetadata, downloadAlbumAsZip, downlo
 import { downloadQualitySettings } from './storage.js';
 import { updateTabTitle, navigate } from './router.js';
 import { db } from './db.js';
+import { updateDiscordPresence, initDiscordRpc } from './discord-rpc.js';
 import { syncManager } from './accounts/pocketbase.js';
 import { waveformGenerator } from './waveform.js';
 import { audioContextManager } from './audio-context.js';
@@ -444,6 +445,7 @@ export function initializePlayerEvents(player, audioPlayer, scrobbler, ui) {
     updateVolumeUI();
 
     initializeSmoothSliders(audioPlayer, player);
+    initDiscordRpc(player);
 }
 
 function initializeSmoothSliders(audioPlayer, player) {

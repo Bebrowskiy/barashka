@@ -5,10 +5,10 @@ use std::sync::Mutex;
 use std::time::{Instant, Duration};
 use tauri::{State, Manager, WebviewWindow};
 
-// Состояние Discord RPC
 struct DiscordState {
     client: Mutex<Option<DiscordIpcClient>>,
     last_update: Mutex<Option<Instant>>,
+    last_track_id: Mutex<Option<String>>,
 }
 
 #[tauri::command]
@@ -24,101 +24,101 @@ fn set_discord_presence(
     end_timestamp: Option<i64>,
     button1_label: Option<String>,
     button1_url: Option<String>,
+    button2_label: Option<String>,
+    button2_url: Option<String>,
+    track_id: Option<String>,
 ) -> Result<(), String> {
-    // 🔒 Безопасная блокировка мьютекса
     let mut client_opt = state.client.lock().map_err(|_| "Mutex poisoned")?;
     
-    // ⚡ Rate limiting: не чаще раза в 15 секунд (лимит Discord)
+    // 🔥 Детект смены трека — сброс rate limit
+    if let Some(new_id) = &track_id {
+        let mut last_id_opt = state.last_track_id.lock().map_err(|_| "Mutex poisoned")?;
+        if let Some(ref last_id) = *last_id_opt {
+            if last_id != new_id {
+                let mut last_opt = state.last_update.lock().map_err(|_| "Mutex poisoned")?;
+                *last_opt = None;
+                log::debug!("[RPC] Track changed: {} → {}", last_id, new_id);
+            }
+        }
+        *last_id_opt = Some(new_id.clone());
+    }
+
+    // Rate limiting
     {
         let mut last_opt = state.last_update.lock().map_err(|_| "Mutex poisoned")?;
         if let Some(last) = *last_opt {
             if last.elapsed() < Duration::from_secs(15) {
-                log::debug!("[Discord RPC] Rate limited, skipping update");
                 return Ok(());
             }
         }
         *last_opt = Some(Instant::now());
     }
 
-    // 🔌 Ленивая инициализация клиента
+    // Ленивая инициализация
     if client_opt.is_none() {
         match DiscordIpcClient::new("1484809741959036949") {
             Ok(mut new_client) => {
                 if new_client.connect().is_ok() {
-                    log::info!("[Discord RPC] Connected");
+                    log::info!("[RPC] Connected");
                     *client_opt = Some(new_client);
                 } else {
-                    log::warn!("[Discord RPC] Failed to connect");
                     return Err("Failed to connect to Discord".into());
                 }
             }
-            Err(e) => {
-                log::error!("[Discord RPC] Init error: {}", e);
-                return Err(format!("Failed to init RPC: {}", e));
-            }
+            Err(e) => return Err(format!("Failed to init RPC: {}", e)),
         }
     }
 
-    // 🎯 Обновление активности, если клиент есть
     if let Some(client) = client_opt.as_mut() {
         let mut act = activity::Activity::new();
         
-        // Текст
-        if let Some(d) = &details {
-            act = act.details(d);
-        }
-        if let Some(s) = &state_str {
-            act = act.state(s);
-        }
+        if let Some(d) = &details { act = act.details(d); }
+        if let Some(s) = &state_str { act = act.state(s); }
         
-        // Изображения
+        // 🔥 Изображения — принимаем как есть (URL или ключ)
         let mut has_assets = false;
         let mut assets = activity::Assets::new();
+        
         if let Some(lik) = &large_image_key {
+            // 🔥 Не меняем URL — если у тебя работает, передаём как есть
             assets = assets.large_image(lik);
             has_assets = true;
-            if let Some(lt) = &large_text {
-                assets = assets.large_text(lt);
-            }
+            if let Some(lt) = &large_text { assets = assets.large_text(lt); }
         }
+        
         if let Some(sik) = &small_image_key {
             assets = assets.small_image(sik);
             has_assets = true;
-            if let Some(st) = &small_text {
-                assets = assets.small_text(st);
-            }
+            if let Some(st) = &small_text { assets = assets.small_text(st); }
         }
-        if has_assets {
-            act = act.assets(assets);
-        }
+        
+        if has_assets { act = act.assets(assets); }
 
-        // ⏱️ Timestamps для прогресс-бара
+        // Timestamps
         if let (Some(start), Some(end)) = (start_timestamp, end_timestamp) {
             if start < end && end - start <= 86400 {
-                let timestamps = activity::Timestamps::new()
-                    .start(start)
-                    .end(end);
-                act = act.timestamps(timestamps);
+                act = act.timestamps(activity::Timestamps::new().start(start).end(end));
             }
         } else if let Some(start) = start_timestamp {
-            let timestamps = activity::Timestamps::new().start(start);
-            act = act.timestamps(timestamps);
+            act = act.timestamps(activity::Timestamps::new().start(start));
         }
 
-        // 🔘 Кнопки
+        // 🔥 Кнопки (до 2 штук)
         let mut buttons = vec![];
         if let (Some(l), Some(u)) = (&button1_label, &button1_url) {
             if !l.is_empty() && !u.is_empty() {
-                buttons.push(activity::Button::new(l, u));
+                buttons.push(activity::Button::new(l, u.trim()));
             }
         }
-        if !buttons.is_empty() {
-            act = act.buttons(buttons);
+        if let (Some(l), Some(u)) = (&button2_label, &button2_url) {
+            if !l.is_empty() && !u.is_empty() && buttons.len() < 2 {
+                buttons.push(activity::Button::new(l, u.trim()));
+            }
         }
+        if !buttons.is_empty() { act = act.buttons(buttons); }
 
-        // 🚀 Отправка с обработкой ошибок
         if let Err(e) = client.set_activity(act) {
-            log::warn!("[Discord RPC] Failed to update: {}", e);
+            log::warn!("[RPC] Update failed: {}", e);
             let _ = client.reconnect();
         }
     }
@@ -129,12 +129,8 @@ fn set_discord_presence(
 #[tauri::command]
 fn clear_discord_presence(state: State<'_, DiscordState>) -> Result<(), String> {
     let mut client_opt = state.client.lock().map_err(|_| "Mutex poisoned")?;
-    
     if let Some(client) = client_opt.as_mut() {
-        if let Err(e) = client.clear_activity() {
-            log::warn!("[Discord RPC] Failed to clear: {}", e);
-            let _ = client.reconnect();
-        }
+        let _ = client.clear_activity();
     }
     Ok(())
 }
@@ -145,6 +141,7 @@ pub fn run() {
         .manage(DiscordState {
             client: Mutex::new(None),
             last_update: Mutex::new(None),
+            last_track_id: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![
             set_discord_presence,
@@ -158,13 +155,10 @@ pub fn run() {
                         .build(),
                 )?;
             }
-            log::info!("[Discord RPC] Tauri app initialized");
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Очищаем статус при закрытии окна (Tauri v2 signature)
             if let tauri::WindowEvent::Destroyed = event {
-                // 🔧 FIX: try_state возвращает Option, а не Result!
                 if let Some(state) = window.app_handle().try_state::<DiscordState>() {
                     let _ = clear_discord_presence(state);
                 }
