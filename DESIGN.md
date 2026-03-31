@@ -1,6 +1,8 @@
-# Monochrome Design System
+# Barashka Design System
 
-A comprehensive design language for consistent UI/UX across Monochrome.
+A comprehensive design language for consistent UI/UX across Barashka Music Player.
+
+> **Note**: This design system is based on the [Monochrome Design System](https://github.com/monochrome-music/monochrome) with enhancements for Barashka.
 
 ## Design Tokens
 

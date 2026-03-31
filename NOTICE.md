@@ -33,12 +33,17 @@ The following major modifications have been made to the original Monochrome proj
    - AI-powered track suggestions
    - Aurora banner UI
 
-4. **Enhanced Import Services**
+4. **Guess The Track Game** (`js/guess-the-track.js`)
+   - MVP game module (coming soon)
+   - Guess songs by 5-second previews
+   - Streak and scoring system
+
+5. **Enhanced Import Services**
    - Beautiful service-specific buttons (Spotify, Apple Music, YouTube Music, Yandex, VK)
-   - Improved import UI with firm colors
+   - Improved import UI with brand colors
    - Better error handling
 
-5. **Security Hardening**
+6. **Security Hardening**
    - Removed hardcoded API tokens
    - Environment variable configuration
    - Comprehensive .gitignore
@@ -51,6 +56,8 @@ The following major modifications have been made to the original Monochrome proj
 - `DEPLOYMENT.md` - Comprehensive deployment guide
 - `GITHUB_PUBLICATION_CHECKLIST.md` - Publication checklist
 - `ROADMAP.md` - Development roadmap with unique features
+- `TAURI_GUIDE.md` - Tauri desktop app guide
+- `THEME_GUIDE.md` - Theme creation guide
 - Enhanced `README.md` with full documentation
 
 ### Infrastructure Added

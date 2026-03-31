@@ -1,12 +1,24 @@
-# Monochrome Instances
+# Barashka & Monochrome Instances
 
-This document lists public instances of Monochrome that you can use. Instances are community-hosted versions of Monochrome that provide access to the application.
+This document lists public instances of Monochrome that can be used with Barashka Music Player. Barashka is a fork of Monochrome and maintains compatibility with Monochrome API instances.
+
+> **Note**: Barashka is designed to work with your local music library and supports multiple API backends including Tidal and Qobuz. These instances provide additional streaming capabilities.
 
 ---
 
-## Official Instance
+## Using API Instances with Barashka
 
-The official Monochrome instance maintained by the core team:
+To use an API instance with Barashka:
+
+1. Go to **Settings** → **API Configuration**
+2. Enter the instance URL in the **API Endpoint** field
+3. Save and restart the application
+
+---
+
+## Monochrome Official Instances
+
+The official Monochrome instances maintained by the core team:
 
 | URL                                                    | Status   | Notes            |
 | ------------------------------------------------------ | -------- | ---------------- |
@@ -15,11 +27,9 @@ The official Monochrome instance maintained by the core team:
 
 ---
 
-## Community Instances
+## UI-Only Instances
 
-### UI-Only Instances
-
-These instances provide the tidal-ui web interface, not monochrome:
+These instances provide the tidal-ui web interface:
 
 | Provider            | URL                                            | Status    |
 | ------------------- | ---------------------------------------------- | --------- |
@@ -31,12 +41,12 @@ These instances provide the tidal-ui web interface, not monochrome:
 
 ## API Instances
 
-Monochrome uses the Hi-Fi API under the hood. Live, up-to-date status trackers (which return JSON) can be found below:
+Barashka uses the Hi-Fi API under the hood. Live, up-to-date status trackers (which return JSON) can be found below:
 
 - https://tidal-uptime.jiffy-puffs-1j.workers.dev/
 - https://tidal-uptime.props-76styles.workers.dev/
 
-These are available API endpoints that can be used with Monochrome or other Hi-Fi based applications:
+These are available API endpoints that can be used with Barashka or other Hi-Fi based applications:
 
 ### Official & Community APIs
 
@@ -70,6 +80,12 @@ To check the current status of instances:
 
 ---
 
+## Self-Hosting
+
+Want to host your own instance? See our [Self-Hosting Guide](self-hosted-database.md) for detailed instructions on setting up your own backend.
+
+---
+
 ## Adding Your Instance
 
 Want to add your instance to this list?
@@ -86,15 +102,16 @@ Want to add your instance to this list?
 
 ## Disclaimer
 
-- Community instances are not affiliated with the official Monochrome project
+- Community instances are not affiliated with the official Monochrome or Barashka projects
 - Use at your own risk
 - Instance availability and performance may vary
-- The official project does not guarantee uptime for community instances
+- The Barashka project does not guarantee uptime for community instances
 
 ---
 
 ## Related Resources
 
 - [Self-Hosting Guide](self-hosted-database.md) - Host your own instance
-- [Contributing Guide](CONTRIBUTE.md) - Contribute to the project
-- [Main Repository](https://github.com/SamidyFR/monochrome) - Source code
+- [Contributing Guide](CONTRIBUTING.md) - Contribute to the project
+- [Barashka Repository](https://github.com/Bebrowskiy/barashka) - Source code
+- [Monochrome Repository](https://github.com/monochrome-music/monochrome) - Original project

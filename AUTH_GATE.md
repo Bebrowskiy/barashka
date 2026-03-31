@@ -1,6 +1,6 @@
-# Global Auth Gate
+# Barashka Auth Gate
 
-This document explains the optional server-side login gate and what it implies for your site.
+This document explains the optional server-side login gate and what it implies for your Barashka Music Player deployment.
 
 ## Overview
 

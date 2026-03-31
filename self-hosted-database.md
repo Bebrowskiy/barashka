@@ -1,8 +1,10 @@
 # Self-Hosted Database Setup Guide
 
-This guide will show you how to set up your own authentication system and database for Monochrome accounts.
+This guide will show you how to set up your own authentication system and database for Barashka Music Player.
 
 > ⚠️ **Note:** You will need to enter the same configurations on each device where you want to use your custom database.
+
+> **Note**: This guide is based on the [Monochrome Self-Hosting Guide](https://github.com/monochrome-music/monochrome) with updates for Barashka.
 
 ---
 
@@ -13,7 +15,7 @@ This guide will show you how to set up your own authentication system and databa
 - [Step 2: PocketBase Setup](#step-2-pocketbase-setup)
 - [Step 3: Cloudflare Tunnel Setup](#step-3-cloudflare-tunnel-setup)
 - [Step 4: Getting Configurations](#step-4-getting-configurations)
-- [Step 5: Linking with Monochrome](#step-5-linking-with-monochrome)
+- [Step 5: Linking with Barashka](#step-5-linking-with-barashka)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -54,7 +56,7 @@ Firebase requires authorized domains for authentication:
 1. In **Authentication** → **Settings** → **Authorized domains**
 2. Click **Add domain**
 3. Add your hosting domain:
-    - If using the official Monochrome site: `monochrome.samidy.com` or your preferred mirror (e.g., `monochrome.tf`)
+    - If using the official Barashka deployment: add your domain
     - If self-hosting the website: add your custom domain
 
 > 💡 `localhost` is usually added by default for local testing. You can leave this enabled.
@@ -145,7 +147,7 @@ To make your PocketBase instance accessible from other devices securely:
 
 1. In the Cloudflare dashboard, go to **Zero Trust** → **Networks** → **Connectors**
 2. Select **Cloudflared**
-3. Give your tunnel a name (e.g., `monochrome-database`)
+3. Give your tunnel a name (e.g., `barashka-database`)
 4. Follow the installation guide for your operating system
 
 ### 3.3 Configure Hostname
@@ -173,7 +175,7 @@ Your database will now be accessible at your chosen domain!
 3. Select **Project settings**
 4. In the **General** tab, scroll to "Your apps"
 5. Click the **Web icon** (`</>`)
-6. Register your app (e.g., "Monochrome Auth")
+6. Register your app (e.g., "Barashka Auth")
 7. Copy the `firebaseConfig` object:
 
 ```javascript
@@ -196,11 +198,11 @@ Simply copy your PocketBase domain from Cloudflare (e.g., `https://db.yourdomain
 
 ---
 
-## Step 5: Linking with Monochrome
+## Step 5: Linking with Barashka
 
-Now configure Monochrome to use your custom backend:
+Now configure Barashka to use your custom backend:
 
-1. Open Monochrome in your browser
+1. Open Barashka in your browser
 2. Go to **Settings** (gear icon)
 3. Click **ADVANCED: Custom Account Database**
 4. Enter your configurations:
@@ -208,7 +210,7 @@ Now configure Monochrome to use your custom backend:
     - **Authentication Config:** The Firebase config JSON object from Step 4.1
 5. Click **Save**
 
-✅ **Done!** Your Monochrome instance is now connected to your custom database.
+✅ **Done!** Your Barashka instance is now connected to your custom database.
 
 > 📝 **Important:** Repeat Step 5 on every device where you want to use your custom database.
 
@@ -246,6 +248,6 @@ Now configure Monochrome to use your custom backend:
 
 ## Need Help?
 
-- Join our [Discord community](https://monochrome.tf/discord) (if available)
-- Open an issue on [GitHub](https://github.com/monochrome-music/monochrome/issues)
-- Check existing [GitHub issues](https://github.com/monochrome-music/monochrome/issues) for solutions
+- Open an issue on [GitHub](https://github.com/Bebrowskiy/barashka/issues)
+- Check existing [GitHub issues](https://github.com/Bebrowskiy/barashka/issues) for solutions
+- Join the [Monochrome Discord](https://monochrome.tf/discord) for community support

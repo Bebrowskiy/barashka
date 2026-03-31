@@ -117,12 +117,14 @@ The CI/CD pipeline automatically deploys on push to `main` branch.
 
 ## 💻 Desktop Applications
 
-### Windows
+### Tauri (Windows, macOS, Linux)
 
 #### Prerequisites
 
 - Node.js >= 18
-- Neutralino.js CLI
+- Tauri CLI (`@tauri-apps/cli`)
+- Rust toolchain (auto-installed by Tauri)
+- **Windows only**: Visual Studio C++ Build Tools with "Desktop development with C++" workload
 
 #### Build Steps:
 
@@ -131,104 +133,53 @@ The CI/CD pipeline automatically deploys on push to `main` branch.
 npm install
 
 # Build desktop app
-npm run build
+npm run tauri build
 
-# Output location
-# dist/Barashka/Barashka-win.exe
+# Output locations:
+# Windows: src-tauri/target/release/bundle/nsis/Barashka_*.exe
+# macOS: src-tauri/target/release/bundle/dmg/Barashka_*.dmg
+# Linux: src-tauri/target/release/bundle/deb/Barashka_*.deb and .AppImage
 ```
 
-#### Installer Creation
+#### Before Building:
 
-Use [Inno Setup](https://jrsoftware.org/isdl.php) or [NSIS](https://nsis.sourceforge.io/):
+1. **Update `src-tauri/tauri.conf.json`**:
+   - `productName`: "Barashka"
+   - `version`: Your version (e.g., "1.0.0")
+   - `identifier`: Unique identifier (e.g., "ru.barashka.desktop")
 
-```nsis
-; Example Inno Setup script
-[Setup]
-AppName=Barashka Music Player
-AppVersion=1.0.0
-DefaultDirName={pf}\Barashka
-OutputDir=installer
+2. **Update icons** in `src-tauri/icons/` with your app icon
 
-[Files]
-Source: "dist\Barashka\*"; DestDir: "{app}"
+3. **Configure Discord RPC** (optional):
+   - Edit `src-tauri/src/lib.rs` with your Discord Application ID
+   - See [TAURI_GUIDE.md](TAURI_GUIDE.md) for details
 
-[Icons]
-Name: "{group}\Barashka"; Filename: "{app}\Barashka-win.exe"
-```
+#### Distribution:
+
+- **Windows**: Distribute `.exe` installer from `nsis/` folder
+- **macOS**: Distribute `.dmg` (requires notarization for Catalina+)
+- **Linux**: Distribute `.deb` package or `.AppImage`
 
 ---
 
-### macOS
+### macOS Notarization (Required for Catalina+)
 
-#### Build Steps:
+1. **Get Apple Developer Certificate** from Apple Developer Portal
 
-```bash
-# Build
-npm run build
-
-# Output
-# dist/Barashka/Barashka.dmg
-```
-
-#### Notarization (Required for macOS Catalina+)
-
-1. **Get Apple Developer Certificate**
 2. **Sign the app**:
    ```bash
    codesign --deep --force --verify --verbose \
      --sign "Developer ID Application: Your Name" \
-     dist/Barashka/Barashka.app
+     src-tauri/target/release/bundle/macos/Barashka.app
    ```
 
 3. **Notarize**:
    ```bash
-   xcrun notarytool submit dist/Barashka/Barashka.dmg \
+   xcrun notarytool submit src-tauri/target/release/bundle/dmg/Barashka_*.dmg \
      --apple-id "your@email.com" \
      --password "app-specific-password" \
      --team-id "TEAM_ID"
    ```
-
----
-
-### Linux
-
-#### AppImage
-
-```bash
-npm run build
-# Output: dist/Barashka/Barashka-linux_x64.AppImage
-```
-
-#### Debian Package
-
-```bash
-# Install electron-builder or use fpm
-npm install -g electron-builder
-
-# Build .deb
-electron-builder --linux deb
-```
-
-#### Flatpak
-
-Create `com.barashka.player.yml`:
-
-```yaml
-app-id: com.barashka.player
-runtime: org.freedesktop.Platform
-runtime-version: '22.08'
-sdk: org.freedesktop.Sdk
-command: barashka
-finish-args:
-  - --share=ipc
-  - --socket=x11
-  - --socket=pulseaudio
-modules:
-  - name: barashka
-    buildsystem: simple
-    build-commands:
-      - cp -r dist/* /app/barashka
-```
 
 ---
 
@@ -534,13 +485,13 @@ node --version  # Should be >= 18
 ### Desktop App Won't Start
 
 ```bash
-# Check Neutralino installation
-neu --version
+# Check Tauri installation
+npm run tauri -- --version
 
-# Rebuild
-npm run build
+# Rebuild desktop app
+npm run tauri build
 
-# Check logs
+# Check logs:
 # Windows: Event Viewer
 # macOS: Console.app
 # Linux: journalctl

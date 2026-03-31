@@ -4,8 +4,10 @@
 >
 > **Based on:** [Monochrome](https://github.com/monochrome-music/monochrome) by [@monochrome-music](https://github.com/monochrome-music)
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](licenze)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](license)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.x-green.svg)](https://nodejs.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-2.10.1-blue.svg)](https://tauri.app/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8.2.0-blue.svg)](https://capacitorjs.com/)
 [![GitHub Pages](https://img.shields.io/badge/deploy-GitHub%20Pages-2ea44f)](https://pages.github.com/)
 [![GitHub stars](https://img.shields.io/github/stars/Bebrowskiy/barashka?style=social)](https://github.com/Bebrowskiy/barashka/stargazers)
 ---
@@ -71,10 +73,16 @@
 ### 🖥️ Desktop App
 
 - **Cross-Platform**: Windows, macOS, Linux
-- **Neutralino.js**: Lightweight desktop framework
+- **Tauri**: Lightweight Rust-based framework
 - **Discord RPC**: Rich Presence integration
-- **System Tray**: Background operation
-- **Native Notifications**: Desktop notifications
+- **Native Features**: System tray, notifications, file system access
+
+### 📱 Mobile App
+
+- **Cross-Platform**: Android, iOS
+- **Capacitor**: Native mobile framework
+- **Touch Optimized**: Mobile-friendly interface
+- **Native Features**: Background playback, media controls
 
 ### 📱 PWA
 
@@ -82,6 +90,12 @@
 - **Installable**: Add to home screen
 - **Push Notifications**: Browser notifications
 - **Fast Loading**: Optimized performance
+
+### 🎮 Games & Features
+
+- **Guess The Track** — Guess the song by 5-second preview *(coming soon)*
+- **TikTok Mode**: Speed + reverb audio effects *(planned)*
+- **Year in Music**: Annual listening reports *(planned)*
 
 ---
 
@@ -133,8 +147,17 @@ npm run dev
 # Build for web
 npm run build:web
 
-# Build desktop app
-npm run build
+# Build desktop app (Tauri)
+npm run tauri build
+
+# Sync mobile apps (Capacitor)
+npm run cap:sync
+
+# Build Android
+npm run cap:android
+
+# Build iOS
+npm run cap:ios
 
 # Preview production build
 npm run preview
@@ -168,27 +191,55 @@ docker compose up -d
 # Access at http://localhost:3000
 ```
 
-### Desktop App
+### Desktop App (Tauri)
 
 #### Windows
 
 ```bash
-npm run build
-# Output: dist/Barashka/Barashka-win.exe
+npm run tauri build
+# Output: src-tauri/target/release/bundle/nsis/Barashka_*.exe
 ```
 
 #### macOS
 
 ```bash
-npm run build
-# Output: dist/Barashka/Barashka.dmg
+npm run tauri build
+# Output: src-tauri/target/release/bundle/dmg/Barashka_*.dmg
 ```
 
 #### Linux
 
 ```bash
-npm run build
-# Output: dist/Barashka/Barashka-linux_x64.AppImage
+npm run tauri build
+# Output: src-tauri/target/release/bundle/
+# - .deb package
+# - .AppImage
+```
+
+### Mobile App (Capacitor)
+
+#### Android
+
+```bash
+# Sync project
+npm run cap:sync
+
+# Open in Android Studio
+npm run cap:android
+
+# Build APK in Android Studio
+```
+
+#### iOS
+
+```bash
+# Sync project
+npm run cap:sync
+
+# Open in Xcode
+npm run cap:ios
+
+# Build in Xcode
 ```
 
 ---
@@ -284,10 +335,28 @@ See full list in [Settings → Keyboard Shortcuts](#).
 |------|---------|
 | **Vite** | Fast bundler |
 | **vite-plugin-pwa** | PWA support |
-| **vite-plugin-neutralino** | Desktop integration |
+| **Tauri CLI** | Desktop app builder |
+| **Capacitor CLI** | Mobile app sync |
 | **ESLint** | Code linting |
 | **Prettier** | Code formatting |
 | **Stylelint** | CSS linting |
+
+### Desktop (Tauri)
+
+| Library | Purpose |
+|---------|---------|
+| **@tauri-apps/api** | JavaScript API for Tauri |
+| **@tauri-apps/cli** | Tauri build tools (2.10.1) |
+| **discord-rich-presence** | Discord Rich Presence (Rust) |
+| **tauri-plugin-log** | Logging system |
+
+### Mobile (Capacitor)
+
+| Library | Purpose |
+|---------|---------|
+| **@capacitor/core** | Capacitor core |
+| **@capacitor/android** | Android platform |
+| **@capacitor/ios** | iOS platform |
 
 ### Libraries
 
@@ -310,10 +379,29 @@ barashka/
 ├── 📄 Configuration Files
 │   ├── package.json              # Dependencies & scripts
 │   ├── vite.config.js            # Vite configuration
-│   ├── neutralino.config.json    # Desktop config
+│   ├── capacitor.config.json     # Mobile config
 │   ├── .env.example              # Environment template
 │   ├── .gitignore                # Git ignore rules
 │   └── eslint.config.js          # ESLint rules
+│
+├── 🦀 Tauri Desktop App
+│   ├── src-tauri/
+│   │   ├── src/
+│   │   │   └── lib.rs            # Rust backend (Discord RPC)
+│   │   ├── icons/                # App icons
+│   │   ├── capabilities/         # Tauri permissions
+│   │   ├── tauri.conf.json       # Tauri configuration
+│   │   ├── Cargo.toml            # Rust dependencies
+│   │   └── Cargo.lock            # Rust lock file
+│
+├── 📱 Capacitor Mobile App
+│   ├── android/                  # Android project
+│   │   ├── app/
+│   │   ├── build.gradle
+│   │   └── gradlew
+│   └── ios/                      # iOS project
+│       ├── App/
+│       └── CapApp-SPM/
 │
 ├── 📚 Documentation
 │   ├── README.md                 # This file
@@ -322,7 +410,9 @@ barashka/
 │   ├── AUTH_GATE.md              # Authentication setup
 │   ├── DESIGN.md                 # Design system
 │   ├── INSTANCES.md              # API instances list
-│   └── THEME_GUIDE.md            # Theme creation
+│   ├── THEME_GUIDE.md            # Theme creation
+│   ├── TAURI_GUIDE.md            # Tauri desktop guide
+│   └── DEPLOYMENT.md             # Deployment guide
 │
 ├── 📂 Source Code
 │   ├── index.html                # Main HTML (entry point)
@@ -332,6 +422,9 @@ barashka/
 │   │   ├── player.js             # Audio player
 │   │   ├── ui.js                 # UI rendering
 │   │   ├── api.js                # Tidal API client
+│   │   ├── discord-rpc.js        # Discord Rich Presence (Tauri)
+│   │   ├── guess-the-track.js    # Guess the track game
+│   │   ├── tiktok-mode.js        # TikTok audio effects
 │   │   ├── crossfade.js          # Crossfade manager
 │   │   ├── vk-importer.js        # VK import
 │   │   └── ...                   # Other modules
@@ -342,10 +435,6 @@ barashka/
 │   │   ├── fonts/                # Custom fonts
 │   │   └── manifest.json         # PWA manifest
 │   │
-├── 🔌 Extensions
-│   └── extensions/               # Neutralino extensions
-│       └── js.neutralino.discordrpc/
-│
 ├── ⚡ Cloudflare Workers
 │   └── functions/                # Serverless functions
 │
@@ -384,7 +473,8 @@ git push origin feature/your-feature
 ## 🙏 Acknowledgments
 
 - **[Monochrome](https://github.com/monochrome-music/monochrome)** - Original project and inspiration
-- **[Neutralino.js](https://neutralino.js.org/)** - Desktop framework
+- **[Tauri](https://tauri.app/)** - Desktop framework (Rust-based)
+- **[Capacitor](https://capacitorjs.com/)** - Mobile framework
 - **[Tidal](https://tidal.com/)** - Music streaming service
 - **[Qobuz](https://www.qobuz.com/)** - Hi-Res music streaming
 - All open-source contributors 🙌

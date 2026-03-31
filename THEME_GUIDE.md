@@ -1,10 +1,12 @@
-# Monochrome Theme Creation Guide
+# Barashka Theme Creation Guide
 
-Welcome to the Monochrome Theme Guide! This document explains how to create, style, and upload custom themes for Monochrome.
+Welcome to the Barashka Theme Guide! This document explains how to create, style, and upload custom themes for Barashka Music Player.
+
+> **Note**: This guide is based on the [Monochrome Theme Guide](https://github.com/monochrome-music/monochrome) with updates for Barashka.
 
 ## Getting Started
 
-Themes in Monochrome are essentially CSS snippets that override the default CSS variables (custom properties). You can create a theme by defining these variables inside a `:root` block.
+Themes in Barashka are essentially CSS snippets that override the default CSS variables (custom properties). You can create a theme by defining these variables inside a `:root` block.
 
 ### Basic Structure
 
@@ -71,7 +73,7 @@ Themes in Monochrome are essentially CSS snippets that override the default CSS 
 
 1.  **Name & Description**: Give your theme a unique name and a brief description.
 2.  **Author Website**: Optionally provide a link to your website.
-    - _Note:_ If you have a Monochrome profile, your name will automatically link to it.
+    - _Note:_ If you have a Barashka profile, your name will automatically link to it.
 3.  **Submit**: Click "Upload Theme".
 
 Once uploaded, your theme will be available for everyone to browse and apply!

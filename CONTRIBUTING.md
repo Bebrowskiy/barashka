@@ -69,8 +69,8 @@ Thank you for your interest in contributing to Barashka Music Player! This docum
 # Start development server
 npm run dev
 
-# Start desktop app in development
-npm run dev:desktop
+# Start desktop app in development (requires Tauri)
+npm run tauri dev
 ```
 
 ### Building
@@ -79,8 +79,11 @@ npm run dev:desktop
 # Build for web
 npm run build:web
 
-# Build desktop app
-npm run build
+# Build desktop app (Tauri)
+npm run tauri build
+
+# Sync mobile apps (Capacitor)
+npm run cap:sync
 
 # Check code quality before building
 npm run build:check
@@ -328,13 +331,25 @@ Mockups, examples, or references
 
 ```
 barashka/
-├── js/              # Main application logic
+├── js/              # Main application logic (48 modules)
 │   ├── app.js       # Application entry point
-│   ├── player.js    # Audio player
+│   ├── player.js    # Audio player core
 │   ├── ui.js        # UI rendering
 │   ├── api.js       # API client
+│   ├── music-api.js # Music API abstraction
+│   ├── db.js        # Database layer (IndexedDB)
+│   ├── storage.js   # Settings & storage
+│   ├── crossfade.js # Crossfade functionality
+│   ├── vk-importer.js # VK Music import
+│   ├── guess-the-track.js # Game module (coming soon)
 │   └── ...
+├── src-tauri/       # Tauri desktop app (Rust)
+│   ├── src/lib.rs   # Rust backend (Discord RPC)
+│   └── tauri.conf.json
+├── android/         # Capacitor Android project
+├── ios/             # Capacitor iOS project
 ├── public/          # Static assets
+├── functions/       # Cloudflare Workers
 ├── index.html       # Main HTML file
 ├── styles.css       # Global styles
 └── vite.config.js   # Build configuration
