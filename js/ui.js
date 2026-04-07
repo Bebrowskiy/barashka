@@ -4052,15 +4052,13 @@ export class UIRenderer {
 
     async renderGuessTrackPage() {
         this.showPage('guess-the-track');
-        const container = document.getElementById('guess-the-track-content');
-        if (!container) return;
         
         if (!this.guessTheTrackGame) {
             this.guessTheTrackGame = new GuessTheTrackGame(this, this.player, db);
         }
         
         // Always initialize to reset UI state
-        await this.guessTheTrackGame.init(container);
+        await this.guessTheTrackGame.init();
     }
 
     async renderTrackerArtistPage(sheetId) {

@@ -1,7 +1,6 @@
 /**
- * Guess The Track — MVP Version
- * Игра: угадай трек по 5-секундному отрывку
- * Источник: история прослушиваний из db.js
+ * Guess The Track — Полноэкранная Модальная Версия (Glassmorphism Quiz)
+ * Изолированная версия (Не конфликтует с основным плеером)
  */
 
 class GuessTheTrackGame {
@@ -14,105 +13,142 @@ class GuessTheTrackGame {
         this.currentRound = 0;
         this.totalRounds = 10;
         this.score = 0;
-        this.streak = 0;
-        this.maxStreak = 0;
+        this.strength = 0; // кол-во правильных
         this.isPlaying = false;
         this.currentTrack = null;
         this.options = [];
         this.answeredRounds = [];
 
+        // Аудио (Изолированное)
+        this.localAudio = new Audio();
+        this.audioActive = false;
+
         // Настройки
-        this.previewDuration = 5000; // 5 секунд
-        this.previewStartTime = 30000; // Начинаем с 30-й секунды
+        this.previewDuration = 10000; // 10 секунд на раунд
+        this.previewStartTime = 30; // секунда старта отрывка
+        this.timerInterval = null;
+        this.userSelection = null; // выбор пользователя
 
         // DOM элементы
         this.elements = {};
     }
 
-    /**
-     * Инициализация игры
-     */
     async init() {
         this.cacheElements();
         this.bindEvents();
         await this.loadHistory();
+        await this.startGame();
     }
 
-    /**
-     * Кэширование DOM элементов
-     */
     cacheElements() {
         this.elements = {
-            view: document.getElementById('guess-the-track-view'),
-            startBtn: document.getElementById('gtt-start-btn'),
-            roundInfo: document.getElementById('gtt-round-info'),
+            modal: document.getElementById('gtt-fullscreen-modal'),
+            closeBtn: document.getElementById('gtt-close-btn'),
+            roundInfo: document.getElementById('gtt-round'),
             progressBar: document.getElementById('gtt-progress-bar'),
-            scoreDisplay: document.getElementById('gtt-score'),
-            streakDisplay: document.getElementById('gtt-streak'),
-            previewPlayer: document.getElementById('gtt-preview-player'),
-            optionsContainer: document.getElementById('gtt-options'),
-            resultModal: document.getElementById('gtt-result-modal'),
-            resultTitle: document.getElementById('gtt-result-title'),
-            resultMessage: document.getElementById('gtt-result-message'),
-            nextRoundBtn: document.getElementById('gtt-next-round-btn'),
-            endGameBtn: document.getElementById('gtt-end-game-btn'),
+            coverArt: document.getElementById('gtt-cover-art'),
+            albumContainer: document.querySelector('.gtt-album-container'),
+            optionBtns: Array.from(document.querySelectorAll('.gtt-option-btn')),
+            scoreScreen: document.getElementById('gtt-score-screen'),
             finalScore: document.getElementById('gtt-final-score'),
             finalAccuracy: document.getElementById('gtt-final-accuracy'),
+            playAgainBtn: document.getElementById('gtt-play-again-btn'),
         };
     }
 
-    /**
-     * Привязка событий
-     */
     bindEvents() {
-        this.elements.startBtn?.addEventListener('click', () => this.startGame());
-        this.elements.nextRoundBtn?.addEventListener('click', () => this.nextRound());
-        this.elements.endGameBtn?.addEventListener('click', () => this.endGame());
+        // Чтобы не множить события, если init() вызывается повторно:
+        // Лучше перезаписывать onClick, но для безопасности уберем старые:
+        const clonePlayAgain = this.elements.playAgainBtn?.cloneNode(true);
+        if (clonePlayAgain && this.elements.playAgainBtn) {
+            this.elements.playAgainBtn.replaceWith(clonePlayAgain);
+            this.elements.playAgainBtn = clonePlayAgain;
+        }
+        const cloneCloseBtn = this.elements.closeBtn?.cloneNode(true);
+        if (cloneCloseBtn && this.elements.closeBtn) {
+            this.elements.closeBtn.replaceWith(cloneCloseBtn);
+            this.elements.closeBtn = cloneCloseBtn;
+        }
+
+        this.elements.playAgainBtn?.addEventListener('click', () => this.startGame());
+        this.elements.closeBtn?.addEventListener('click', () => this.cleanupAndClose());
+
+        this.elements.optionBtns.forEach((btn) => {
+            const clone = btn.cloneNode(true);
+            btn.replaceWith(clone);
+        });
+        
+        // Refresh reference after clone
+        this.elements.optionBtns = Array.from(document.querySelectorAll('.gtt-option-btn'));
+
+        this.elements.optionBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                if (this.isPlaying && !this.waitingNextRound) {
+                    this.selectAnswer(index);
+                }
+            });
+        });
     }
 
-    /**
-     * Загрузка истории прослушиваний
-     */
+    cleanupAndClose() {
+        this.cleanup();
+        if (this.elements.modal) {
+            this.elements.modal.style.display = 'none';
+        }
+        // Return to a safe UI state if they arrived via link
+        this.ui.showPage('home'); 
+    }
+
+    cleanup() {
+        clearInterval(this.timerInterval);
+        if (this.localAudio) {
+            this.localAudio.pause();
+            this.localAudio.src = '';
+        }
+        this.isPlaying = false;
+        this.waitingNextRound = false;
+    }
+
     async loadHistory() {
         try {
-            const history = await this.db.getAllFromCollection('history_tracks');
+            const history = await this.db.getHistory();
             this.history = history || [];
-            console.log(`[GTT] Загружено ${this.history.length} треков из истории`);
         } catch (error) {
             console.error('[GTT] Ошибка загрузки истории:', error);
             this.history = [];
         }
     }
 
-    /**
-     * Старт игры
-     */
     async startGame() {
-        if (this.history.length < 4) {
-            this.ui.showNotification('Нужно минимум 4 трека в истории для игры!');
+        if (!this.history || this.history.length < 4) {
+            alert('Нужно минимум 4 уникальных трека в вашей истории прослушивания для игры!');
+            this.cleanupAndClose();
             return;
         }
 
-        // Сброс состояния
+        // Останавливаем основной плеер!
+        if (this.player && this.player.audio) {
+            this.player.audio.pause();
+        }
+
+        // Показываем полноэкранный модал
+        if (this.elements.modal) {
+            this.elements.modal.style.display = 'flex';
+        }
+
+        // Сброс
         this.currentRound = 0;
         this.score = 0;
-        this.streak = 0;
-        this.maxStreak = 0;
+        this.strength = 0;
         this.answeredRounds = [];
         this.isPlaying = true;
+        this.waitingNextRound = false;
 
-        // UI обновления
-        this.elements.view?.classList.remove('hidden');
-        this.elements.startBtn?.classList.add('hidden');
-        this.updateScoreDisplay();
+        if(this.elements.scoreScreen) this.elements.scoreScreen.style.display = 'none';
 
-        // Первый раунд
         await this.startRound();
     }
 
-    /**
-     * Начало раунда
-     */
     async startRound() {
         if (this.currentRound >= this.totalRounds) {
             this.endGame();
@@ -121,11 +157,22 @@ class GuessTheTrackGame {
 
         this.currentRound++;
         this.updateRoundInfo();
+        this.userSelection = null; // Сброс выбора
+        this.waitingNextRound = false; // Разрешаем выбор
+        
+        // Сброс UI-классов анимаций обложки
+        if (this.elements.albumContainer) {
+            this.elements.albumContainer.classList.remove('revealed', 'correct-pulse', 'playing-pulse');
+        }
 
-        // Выбор трека и вариантов
+        this.elements.optionBtns.forEach(btn => {
+            btn.classList.remove('correct', 'incorrect', 'selected');
+            btn.style.pointerEvents = 'auto'; // allow clicks
+        });
+
         const roundData = await this.prepareRound();
         if (!roundData) {
-            this.ui.showNotification('Недостаточно треков для продолжения');
+            alert('Недостаточно уникальных треков для продолжения :(');
             this.endGame();
             return;
         }
@@ -133,31 +180,22 @@ class GuessTheTrackGame {
         this.currentTrack = roundData.correct;
         this.options = roundData.options;
 
-        // Рендер вариантов
-        this.renderOptions();
-
-        // Запуск превью
+        await this.renderOptions();
         await this.playPreview();
     }
 
-    /**
-     * Подготовка раунда (выбор трека + вариантов)
-     */
     async prepareRound() {
-        // Фильтруем уже использованные треки
         const usedIds = this.answeredRounds.map((r) => r.correctId);
         const availableTracks = this.history.filter((t) => !usedIds.includes(t.id));
 
         if (availableTracks.length < 1) return null;
 
-        // Выбираем правильный трек (случайный)
         const correctIndex = Math.floor(Math.random() * availableTracks.length);
         const correctTrack = availableTracks[correctIndex];
 
-        // Выбираем 3 неправильных варианта (похожий жанр/эпоха)
         const wrongOptions = this.selectWrongOptions(correctTrack, usedIds);
-
-        // Перемешиваем варианты
+        if(wrongOptions.length < 3) return null; // Edge case
+        
         const options = this.shuffleArray([correctTrack, ...wrongOptions]);
 
         return {
@@ -166,249 +204,213 @@ class GuessTheTrackGame {
         };
     }
 
-    /**
-     * Выбор неправильных вариантов
-     */
     selectWrongOptions(correctTrack, usedIds) {
         const wrongOptions = [];
-        const usedWrongIds = new Set(usedIds);
+        const usedWrongIds = new Set();
+        usedWrongIds.add(correctTrack.id);
 
-        // Пытаемся найти треки того же артиста
-        const sameArtist = this.history.filter(
-            (t) => t.artist?.id === correctTrack.artist?.id && t.id !== correctTrack.id && !usedWrongIds.has(t.id)
-        );
+        const availableRandom = this.history.filter((t) => !usedWrongIds.has(t.id));
 
-        // Пытаемся найти треки похожего жанра
-        const sameGenre = this.history.filter(
-            (t) => t.genre === correctTrack.genre && t.id !== correctTrack.id && !usedWrongIds.has(t.id)
-        );
-
-        // Случайные треки
-        const random = this.history.filter((t) => t.id !== correctTrack.id && !usedWrongIds.has(t.id));
-
-        // Берём по 1 из каждой категории (если есть)
-        if (sameArtist.length > 0) wrongOptions.push(sameArtist[0]);
-        if (sameGenre.length > 0 && wrongOptions.length < 2) wrongOptions.push(sameGenre[0]);
-        while (wrongOptions.length < 3 && random.length > 0) {
-            const idx = Math.floor(Math.random() * random.length);
-            if (!wrongOptions.find((t) => t.id === random[idx].id)) {
-                wrongOptions.push(random[idx]);
+        // Выбираем 3 случайных неправильных трека
+        const shuffled = this.shuffleArray([...availableRandom]);
+        for(let i=0; i<3; i++) {
+            if (shuffled[i]) {
+                wrongOptions.push(shuffled[i]);
             }
-            random.splice(idx, 1);
         }
 
-        return wrongOptions.slice(0, 3);
+        // Если не удалось набрать 3 трека из истории (история слишком маленькая)
+        if (wrongOptions.length < 3) return [];
+
+        return wrongOptions;
     }
 
-    /**
-     * Рендер вариантов ответа
-     */
-    renderOptions() {
-        const container = this.elements.optionsContainer;
-        if (!container) return;
-
-        container.innerHTML = '';
-
+    async renderOptions() {
+        // Установка кнопок
         this.options.forEach((track, index) => {
-            const card = document.createElement('div');
-            card.className = 'gtt-option-card';
-            card.dataset.index = index;
-            card.dataset.trackId = track.id;
-
-            const coverUrl = track.cover?.url || track.image || this.ui.generatePlaceholder('album');
+            const btn = this.elements.optionBtns[index];
+            if(!btn) return;
+            
             const artistName = track.artist?.name || 'Unknown Artist';
             const trackTitle = track.title || 'Unknown Title';
 
-            card.innerHTML = `
-        <div class="gtt-option-cover">
-          <img src="${coverUrl}" alt="${trackTitle}" loading="lazy" />
-        </div>
-        <div class="gtt-option-info">
-          <div class="gtt-option-title">${this.ui.escapeHtml(trackTitle)}</div>
-          <div class="gtt-option-artist">${this.ui.escapeHtml(artistName)}</div>
-        </div>
-      `;
-
-            card.addEventListener('click', () => this.selectAnswer(index));
-            container.appendChild(card);
+            btn.querySelector('.gtt-opt-title').textContent = trackTitle;
+            btn.querySelector('.gtt-opt-artist').textContent = artistName;
         });
+
+        // Установка Размытой Обложки с ожиданием загрузки
+        if (this.elements.coverArt) {
+            let coverUrl = this.currentTrack.album?.cover || this.currentTrack.cover || this.currentTrack.image;
+            if (coverUrl && !coverUrl.startsWith('http') && !coverUrl.startsWith('data:')) {
+                coverUrl = this.player.api.getCoverUrl(coverUrl);
+            }
+            if (!coverUrl) {
+                coverUrl = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            }
+            
+            await new Promise((resolve) => {
+                this.elements.coverArt.onload = resolve;
+                this.elements.coverArt.onerror = resolve;
+                this.elements.coverArt.src = coverUrl;
+            });
+        }
     }
 
-    /**
-     * Воспроизведение превью (5 секунд)
-     */
     async playPreview() {
         const track = this.currentTrack;
         if (!track) return;
-
-        // Блокируем варианты на время превью
-        this.toggleOptions(false);
+        
+        clearInterval(this.timerInterval);
 
         try {
-            // Используем существующий player.js для воспроизведения
-            // Начинаем с 30-й секунды, играем 5 секунд
-            await this.player.playTrack(track);
-            this.player.audio.currentTime = this.previewStartTime / 1000;
+            this.localAudio.pause();
+            
+            // Получаем ссылку на стрим
+            const streamUrl = await this.player.api.getStreamUrl(track.id, 'HIGH');
+            this.localAudio.src = streamUrl;
+            
+            this.localAudio.currentTime = this.previewStartTime;
+            
+            this.localAudio.play().then(() => {
+                if (this.elements.albumContainer) {
+                    this.elements.albumContainer.classList.add('playing-pulse');
+                }
+            }).catch(e => {
+                console.error('[GTT] Не удалось воспроизвести превью:', e);
+            });
 
-            // Создаём таймер для остановки
-            this.previewTimeout = setTimeout(() => {
-                this.player.pause();
-                this.toggleOptions(true);
-            }, this.previewDuration);
+            this.startTimer();
         } catch (error) {
             console.error('[GTT] Ошибка воспроизведения превью:', error);
-            this.toggleOptions(true);
+            // Фолбэк: быстро засчитать как пропуск, если трек сломан
+            this.startTimer();
         }
     }
 
-    /**
-     * Блокировка/разблокировка вариантов
-     */
-    toggleOptions(enabled) {
-        const cards = this.elements.optionsContainer?.querySelectorAll('.gtt-option-card');
-        cards?.forEach((card) => {
-            card.style.pointerEvents = enabled ? 'auto' : 'none';
-            card.style.opacity = enabled ? '1' : '0.5';
-        });
+    startTimer() {
+        const startTime = Date.now();
+        const duration = this.previewDuration;
+
+        this.elements.progressBar.style.transition = 'none';
+        this.elements.progressBar.style.width = '100%';
+        
+        // Force reflow
+        void this.elements.progressBar.offsetWidth;
+
+        this.elements.progressBar.style.transition = `width ${duration / 1000}s linear`;
+        this.elements.progressBar.style.width = '0%';
+
+        this.timerInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= duration) {
+                clearInterval(this.timerInterval);
+                this.timeOut();
+            }
+        }, 100);
     }
 
-    /**
-     * Выбор ответа
-     */
-    async selectAnswer(selectedIndex) {
+    timeOut() {
         if (!this.isPlaying) return;
+        this.waitingNextRound = true;
+        this.localAudio.pause();
+        
+        if (this.elements.albumContainer) {
+            this.elements.albumContainer.classList.remove('playing-pulse');
+        }
 
-        // Очищаем таймер превью
-        clearTimeout(this.previewTimeout);
-        this.player.pause();
+        // Вычисляем результаты по завершению таймера
+        const correctIndex = this.options.findIndex((t) => t.id === this.currentTrack.id);
+        const correctBtn = this.elements.optionBtns[correctIndex];
 
-        const selectedTrack = this.options[selectedIndex];
-        const isCorrect = selectedTrack.id === this.currentTrack.id;
+        let isCorrect = false;
 
-        // Сохраняем результат раунда
+        // Блокируем кнопки
+        this.elements.optionBtns.forEach(btn => btn.style.pointerEvents = 'none');
+
+        if (this.userSelection !== null) {
+            const selectedBtn = this.elements.optionBtns[this.userSelection];
+            isCorrect = this.userSelection === correctIndex;
+
+            if (isCorrect) {
+                this.score += 100;
+                this.strength++;
+                selectedBtn.classList.remove('selected');
+                selectedBtn.classList.add('correct');
+                this.revealCoverArt(true);
+            } else {
+                selectedBtn.classList.remove('selected');
+                selectedBtn.classList.add('incorrect');
+                if (correctBtn) correctBtn.classList.add('correct');
+                this.revealCoverArt(false);
+            }
+        } else {
+            // Пользователь ничего не выбрал
+            if (correctBtn) correctBtn.classList.add('correct');
+            this.revealCoverArt(false);
+        }
+
         this.answeredRounds.push({
             correctId: this.currentTrack.id,
-            selectedId: selectedTrack.id,
-            isCorrect: isCorrect,
+            userCorrect: isCorrect,
+            timeOut: this.userSelection === null, 
         });
 
-        // Подсчёт очков
-        if (isCorrect) {
-            this.streak++;
-            if (this.streak > this.maxStreak) this.maxStreak = this.streak;
-
-            // Базовые очки + бонус за серию
-            const basePoints = 100;
-            const streakBonus = Math.min(this.streak * 10, 50);
-            this.score += basePoints + streakBonus;
-
-            this.showResult(true);
-        } else {
-            this.streak = 0;
-            this.showResult(false);
-        }
-
-        this.updateScoreDisplay();
+        // Пауза перед след. раундом (чтобы посмотреть картинку и ответ)
+        setTimeout(() => this.startRound(), 3500);
     }
 
-    /**
-     * Показ результата раунда
-     */
-    showResult(isCorrect) {
-        const modal = this.elements.resultModal;
-        const title = this.elements.resultTitle;
-        const message = this.elements.resultMessage;
-
-        if (!modal || !title || !message) return;
-
-        modal.classList.remove('hidden');
-        modal.classList.add(isCorrect ? 'gtt-correct' : 'gtt-wrong');
-
-        if (isCorrect) {
-            title.textContent = 'Верно! 🎉';
-            message.textContent = this.currentTrack.title;
-        } else {
-            title.textContent = 'Неверно 😔';
-            message.textContent = `Правильный ответ: ${this.currentTrack.title}`;
+    selectAnswer(index) {
+        if (this.waitingNextRound || this.userSelection !== null) return;
+        
+        // Запоминаем выбор пользователя, но ждем окончания таймера!
+        this.userSelection = index;
+        
+        // Визуально фиксируем выбор (рамка/свечение)
+        const selectedBtn = this.elements.optionBtns[index];
+        if (selectedBtn) {
+            selectedBtn.classList.add('selected');
         }
-
-        // Авто-скрытие через 2 секунды
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 2000);
+        
+        // Музыка и таймер продолжают идти!
     }
 
-    /**
-     * Следующий раунд
-     */
-    async nextRound() {
-        await this.startRound();
-    }
-
-    /**
-     * Конец игры
-     */
-    endGame() {
-        this.isPlaying = false;
-        this.player.pause();
-
-        // Показываем финальные результаты
-        const accuracy =
-            this.answeredRounds.length > 0
-                ? Math.round((this.answeredRounds.filter((r) => r.isCorrect).length / this.answeredRounds.length) * 100)
-                : 0;
-
-        if (this.elements.finalScore) {
-            this.elements.finalScore.textContent = `${this.score} очков`;
-        }
-        if (this.elements.finalAccuracy) {
-            this.elements.finalAccuracy.textContent = `${accuracy}% точности`;
-        }
-
-        // Возвращаем кнопку старта
-        this.elements.startBtn?.classList.remove('hidden');
-        this.elements.view?.classList.add('hidden');
-
-        this.ui.showNotification(`Игра окончена! Счёт: ${this.score}`);
-    }
-
-    /**
-     * Обновление отображения счёта
-     */
-    updateScoreDisplay() {
-        if (this.elements.scoreDisplay) {
-            this.elements.scoreDisplay.textContent = this.score;
-        }
-        if (this.elements.streakDisplay) {
-            this.elements.streakDisplay.textContent = this.streak > 1 ? `🔥 ${this.streak}` : '';
+    revealCoverArt(pulseCorrect = false) {
+        if (this.elements.albumContainer) {
+            this.elements.albumContainer.classList.add('revealed');
+            if (pulseCorrect) {
+                this.elements.albumContainer.classList.add('correct-pulse');
+            }
         }
     }
 
-    /**
-     * Обновление информации о раунде
-     */
     updateRoundInfo() {
         if (this.elements.roundInfo) {
-            this.elements.roundInfo.textContent = `Раунд ${this.currentRound}/${this.totalRounds}`;
-        }
-        if (this.elements.progressBar) {
-            const progress = (this.currentRound / this.totalRounds) * 100;
-            this.elements.progressBar.style.width = `${progress}%`;
+            this.elements.roundInfo.textContent = `Round ${this.currentRound} / ${this.totalRounds}`;
         }
     }
 
-    /**
-     * Перемешивание массива (Fisher-Yates)
-     */
-    shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    endGame() {
+        this.isPlaying = false;
+        clearInterval(this.timerInterval);
+        this.localAudio.pause();
+
+        const accuracy = Math.round((this.strength / this.totalRounds) * 100) || 0;
+
+        if (this.elements.finalScore) this.elements.finalScore.textContent = this.score;
+        if (this.elements.finalAccuracy) this.elements.finalAccuracy.textContent = `Accuracy: ${accuracy}%`;
+
+        if (this.elements.scoreScreen) {
+            this.elements.scoreScreen.style.display = 'flex';
         }
-        return shuffled;
+    }
+
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
     }
 }
 
-// Экспорт для использования в app.js
 export { GuessTheTrackGame };

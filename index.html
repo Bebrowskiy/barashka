@@ -3618,7 +3618,7 @@
                             <div class="track-list" id="profile-top-tracks-container"></div>
                         </div>
                     </div>
-                </div>
+                /* deleted page-guess-the-track */
 
                 <div id="page-settings" class="page">
                     <h2 class="section-title" data-i18n="settings-title">Settings</h2>
@@ -6191,6 +6191,52 @@
                 </div>
             </footer>
         </div>
+        
+        <div id="gtt-fullscreen-modal" style="display: none;">
+            <button id="gtt-close-btn" title="Close Game" style="position: absolute; top: 1.5rem; right: 1.5rem; background: transparent; border: none; color: #fff; font-size: 2rem; cursor: pointer; z-index: 10001;">×</button>
+            
+            <div class="gtt-game-header">
+                <h2 id="gtt-round">Round 1 / 10</h2>
+                <div class="gtt-progress-container"><div id="gtt-progress-bar"></div></div>
+            </div>
+
+            <div class="gtt-game-body">
+                <div class="gtt-album-container">
+                    <img id="gtt-cover-art" src="" alt="Mystery Cover" crossorigin="anonymous">
+                </div>
+
+                <div class="gtt-options-grid">
+                    <button class="gtt-option-btn card-interactive" data-index="0">
+                        <span class="gtt-opt-title">Title</span>
+                        <span class="gtt-opt-artist">Artist</span>
+                    </button>
+                    <button class="gtt-option-btn card-interactive" data-index="1">
+                        <span class="gtt-opt-title">Title</span>
+                        <span class="gtt-opt-artist">Artist</span>
+                    </button>
+                    <button class="gtt-option-btn card-interactive" data-index="2">
+                        <span class="gtt-opt-title">Title</span>
+                        <span class="gtt-opt-artist">Artist</span>
+                    </button>
+                    <button class="gtt-option-btn card-interactive" data-index="3">
+                        <span class="gtt-opt-title">Title</span>
+                        <span class="gtt-opt-artist">Artist</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Score screen overlay -->
+            <div id="gtt-score-screen" class="gtt-score-modal" style="display: none;">
+                <div class="gtt-score-content">
+                    <h2>Game Over</h2>
+                    <h3 id="gtt-final-score">0</h3>
+                    <p>Score</p>
+                    <p id="gtt-final-accuracy" style="margin-bottom: 2rem; font-size: 1.5rem; font-weight: 600;">Accuracy: 0%</p>
+                    <button id="gtt-play-again-btn" class="btn-primary" style="padding: 1rem 2rem; font-size: 1.2rem; width: 100%;">Play Again</button>
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.3/dist/pocketbase.umd.js"></script>
         <script type="module" src="/js/i18n.js"></script>
         <script type="module" src="/js/app.js"></script>

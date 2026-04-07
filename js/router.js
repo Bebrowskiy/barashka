@@ -30,6 +30,11 @@ export function createRouter(ui) {
         const page = parts[0];
         const param = parts.slice(1).join('/');
 
+        // Cleanup Guess The Track instance if we're navigating away
+        if (ui.guessTheTrackGame && page !== 'guess-the-track') {
+            ui.guessTheTrackGame.cleanupAndClose();
+        }
+
         // Helper to extract provider prefix and ID from params
         // Supports formats like: /track/t/123 (Tidal), /track/q/123 (Qobuz), /track/123 (default)
         const extractProviderAndId = (p) => {
