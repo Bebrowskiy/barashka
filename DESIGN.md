@@ -270,7 +270,7 @@ Available themes:
 
 - `monochrome` (default)
 - `dark`
-- `ocean`
+- `lighty`
 - `purple`
 - `forest`
 - `mocha`

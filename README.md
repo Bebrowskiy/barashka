@@ -1,3 +1,7 @@
+<p align="center">
+   <img src="app-icon.png" width="200" alt="Barashka icon">
+</p>
+
 # 🎵 Barashka Music Player
 
 > A modern, minimalist music player for managing your local media library with streaming capabilities through Tidal and Qobuz APIs.
@@ -10,6 +14,7 @@
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.2.0-blue.svg)](https://capacitorjs.com/)
 [![GitHub Pages](https://img.shields.io/badge/deploy-GitHub%20Pages-2ea44f)](https://pages.github.com/)
 [![GitHub stars](https://img.shields.io/github/stars/Bebrowskiy/barashka?style=social)](https://github.com/Bebrowskiy/barashka/stargazers)
+
 ---
 
 ## 📋 Table of Contents
@@ -38,7 +43,7 @@
 - **Crossfade**: Smooth transitions between tracks
 - **Replay Gain**: Volume normalization
 - **Equalizer**: 10-band parametric equalizer
-- **Visualizers**: Multiple visualization modes (Butterchurn, Kawarp, Particles)
+- **Visualizers**: Multiple visualization modes (Butterchurn, Kawarp, Particles, Anime Waifu & Neko)
 
 ### 📁 Library Management
 
@@ -93,15 +98,18 @@
 
 ### 🎮 Games & Features
 
-- **Guess The Track** — Guess the song by 5-second preview *(coming soon)*
-- **TikTok Mode**: Speed + reverb audio effects *(planned)*
-- **Year in Music**: Annual listening reports *(planned)*
+- **Guess The Track** — Guess the song by 5-second preview
+- **Year in Music**: Annual listening reports _(planned)_
 
 ---
 
 ## 📸 Screenshots
 
-> Add your screenshots here
+![Light Theme](screenshots/lightTheme.png)
+![Dark Theme](screenshots/darkTheme.png)
+![Playlist](screenshots/playlist.png)
+![Visualizer Neko](screenshots/playerNeko.png)
+![Visualizer LCD](screenshots/playerLCD.png)
 
 ```
 📁 screenshots/
@@ -174,12 +182,12 @@ npm run preview
 1. Enable GitHub Pages in repository settings
 2. Set source: `Deploy from branch` → `main` → `/dist`
 3. Push changes:
-   ```bash
-   npm run build:web
-   git add dist/
-   git commit -m "Build for GitHub Pages"
-   git push
-   ```
+    ```bash
+    npm run build:web
+    git add dist/
+    git commit -m "Build for GitHub Pages"
+    git push
+    ```
 4. Access at: `https://username.github.io/repo-name/`
 
 #### Docker
@@ -271,9 +279,9 @@ See [`.env.example`](.env.example) for all available options.
 1. Create a project at [Firebase Console](https://console.firebase.google.com)
 2. Enable Authentication → Sign-in methods
 3. Copy `firebaseConfig` to `.env`:
-   ```env
-   FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
-   ```
+    ```env
+    FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
+    ```
 
 ### PocketBase Setup (Optional)
 
@@ -287,16 +295,16 @@ See [`.env.example`](.env.example) for all available options.
 
 ### Keyboard Shortcuts
 
-| Action | Shortcut |
-|--------|----------|
-| Play/Pause | `Space` |
-| Next Track | `Shift + →` |
+| Action         | Shortcut    |
+| -------------- | ----------- |
+| Play/Pause     | `Space`     |
+| Next Track     | `Shift + →` |
 | Previous Track | `Shift + ←` |
-| Volume Up | `↑` |
-| Volume Down | `↓` |
-| Search | `/` |
-| Toggle Lyrics | `L` |
-| Toggle Queue | `Q` |
+| Volume Up      | `↑`         |
+| Volume Down    | `↓`         |
+| Search         | `/`         |
+| Toggle Lyrics  | `L`         |
+| Toggle Queue   | `Q`         |
 
 See full list in [Settings → Keyboard Shortcuts](#).
 
@@ -321,54 +329,54 @@ See full list in [Settings → Keyboard Shortcuts](#).
 
 ### Frontend
 
-| Technology | Purpose |
-|------------|---------|
-| **JavaScript ES6+** | Core logic |
-| **HTML5** | Structure |
-| **CSS3** | Styling with custom properties |
-| **IndexedDB** | Local storage |
-| **Web Audio API** | Audio processing |
+| Technology          | Purpose                        |
+| ------------------- | ------------------------------ |
+| **JavaScript ES6+** | Core logic                     |
+| **HTML5**           | Structure                      |
+| **CSS3**            | Styling with custom properties |
+| **IndexedDB**       | Local storage                  |
+| **Web Audio API**   | Audio processing               |
 
 ### Build Tools
 
-| Tool | Purpose |
-|------|---------|
-| **Vite** | Fast bundler |
-| **vite-plugin-pwa** | PWA support |
-| **Tauri CLI** | Desktop app builder |
-| **Capacitor CLI** | Mobile app sync |
-| **ESLint** | Code linting |
-| **Prettier** | Code formatting |
-| **Stylelint** | CSS linting |
+| Tool                | Purpose             |
+| ------------------- | ------------------- |
+| **Vite**            | Fast bundler        |
+| **vite-plugin-pwa** | PWA support         |
+| **Tauri CLI**       | Desktop app builder |
+| **Capacitor CLI**   | Mobile app sync     |
+| **ESLint**          | Code linting        |
+| **Prettier**        | Code formatting     |
+| **Stylelint**       | CSS linting         |
 
 ### Desktop (Tauri)
 
-| Library | Purpose |
-|---------|---------|
-| **@tauri-apps/api** | JavaScript API for Tauri |
-| **@tauri-apps/cli** | Tauri build tools (2.10.1) |
+| Library                   | Purpose                      |
+| ------------------------- | ---------------------------- |
+| **@tauri-apps/api**       | JavaScript API for Tauri     |
+| **@tauri-apps/cli**       | Tauri build tools (2.10.1)   |
 | **discord-rich-presence** | Discord Rich Presence (Rust) |
-| **tauri-plugin-log** | Logging system |
+| **tauri-plugin-log**      | Logging system               |
 
 ### Mobile (Capacitor)
 
-| Library | Purpose |
-|---------|---------|
-| **@capacitor/core** | Capacitor core |
+| Library                | Purpose          |
+| ---------------------- | ---------------- |
+| **@capacitor/core**    | Capacitor core   |
 | **@capacitor/android** | Android platform |
-| **@capacitor/ios** | iOS platform |
+| **@capacitor/ios**     | iOS platform     |
 
 ### Libraries
 
-| Library | Purpose |
-|---------|---------|
-| **dashjs** | DASH streaming |
-| **@ffmpeg/ffmpeg** | Audio conversion |
-| **butterchurn** | Winamp visualizer |
-| **@kawarp/core** | Caustic visualizer |
-| **firebase** | Authentication |
-| **pocketbase** | Database sync |
-| **appwrite** | Alternative backend |
+| Library            | Purpose             |
+| ------------------ | ------------------- |
+| **dashjs**         | DASH streaming      |
+| **@ffmpeg/ffmpeg** | Audio conversion    |
+| **butterchurn**    | Winamp visualizer   |
+| **@kawarp/core**   | Caustic visualizer  |
+| **firebase**       | Authentication      |
+| **pocketbase**     | Database sync       |
+| **appwrite**       | Alternative backend |
 
 ---
 
@@ -452,7 +460,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 # Fork and clone
-git clone https://github.com/YOUR_USERNAME/barashka.git
+git clone https://github.com/Bebrowskiy/barashka.git
 cd barashka
 
 # Create branch
@@ -483,6 +491,6 @@ git push origin feature/your-feature
 
 ---
 
-> 🎶 *Music is the language of the soul. Let your player sound perfect.*
+> 🎶 _Music is the language of the soul. Let your player sound perfect._
 
 ---

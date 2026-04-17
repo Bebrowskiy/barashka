@@ -30,7 +30,7 @@ Thank you for your interest in contributing to Barashka Music Player! This docum
 1. **Fork** the repository
 2. **Clone** your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/barashka.git
+   git clone https://github.com/Bebrowskiy/barashka.git
    cd barashka
    ```
 3. **Install dependencies**:
@@ -58,7 +58,7 @@ Thank you for your interest in contributing to Barashka Music Player! This docum
    cp .env.example .env
    ```
 
-2. Configure required variables:
+2. Configure required variables (not necessary):
    - `BARASHKA_PORT` - Development server port
    - `AUTH_ENABLED` - Set to `false` for local development
    - `AUTH_SECRET` - Random string for sessions (if auth enabled)
@@ -341,7 +341,7 @@ barashka/
 │   ├── storage.js   # Settings & storage
 │   ├── crossfade.js # Crossfade functionality
 │   ├── vk-importer.js # VK Music import
-│   ├── guess-the-track.js # Game module (coming soon)
+│   ├── guess-the-track.js # Game module
 │   └── ...
 ├── src-tauri/       # Tauri desktop app (Rust)
 │   ├── src/lib.rs   # Rust backend (Discord RPC)
