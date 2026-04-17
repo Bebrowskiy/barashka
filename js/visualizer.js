@@ -5,6 +5,7 @@ import { ParticlesPreset } from './visualizers/particles.js';
 import { UnknownPleasuresWebGL } from './visualizers/unknown_pleasures_webgl.js';
 import { ButterchurnPreset } from './visualizers/butterchurn.js';
 import { KawarpPreset } from './visualizers/kawarp.js';
+import { AnimePreset } from './visualizers/anime.js';
 import { audioContextManager } from './audio-context.js';
 
 export class Visualizer {
@@ -25,6 +26,7 @@ export class Visualizer {
             'unknown-pleasures': new UnknownPleasuresWebGL(),
             butterchurn: new ButterchurnPreset(),
             kawarp: new KawarpPreset(),
+            anime: new AnimePreset(),
         };
 
         this.activePresetKey = visualizerSettings.getPreset();
@@ -298,9 +300,6 @@ export class Visualizer {
         if (this.activePreset?.destroy) {
             this.activePreset.destroy();
         }
-
-        this._currentContextType = undefined;
-        this.ctx = null;
 
         this.activePresetKey = key;
         this.initContext();

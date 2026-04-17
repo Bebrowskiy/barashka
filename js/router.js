@@ -104,6 +104,7 @@ export function createRouter(ui) {
                 }
                 break;
             default:
+                // This handles 'settings', 'about', 'theme-store' etc.
                 ui.showPage(page);
                 break;
         }

@@ -271,15 +271,19 @@ class GuessTheTrackGame {
             
             this.localAudio.currentTime = this.previewStartTime;
             
+            // Предварительно показываем полный бар, пока ждем загрузку буфера
+            this.elements.progressBar.style.transition = 'none';
+            this.elements.progressBar.style.width = '100%';
+
             this.localAudio.play().then(() => {
                 if (this.elements.albumContainer) {
                     this.elements.albumContainer.classList.add('playing-pulse');
                 }
+                this.startTimer();
             }).catch(e => {
                 console.error('[GTT] Не удалось воспроизвести превью:', e);
+                this.startTimer();
             });
-
-            this.startTimer();
         } catch (error) {
             console.error('[GTT] Ошибка воспроизведения превью:', error);
             // Фолбэк: быстро засчитать как пропуск, если трек сломан
@@ -360,12 +364,15 @@ class GuessTheTrackGame {
     }
 
     selectAnswer(index) {
-        if (this.waitingNextRound || this.userSelection !== null) return;
+        if (this.waitingNextRound) return;
         
-        // Запоминаем выбор пользователя, но ждем окончания таймера!
+        // Запоминаем выбор пользователя, но ждем окончания таймера! (Можно менять выбор)
         this.userSelection = index;
         
-        // Визуально фиксируем выбор (рамка/свечение)
+        // Сбрасываем выделение со всех кнопок
+        this.elements.optionBtns.forEach(btn => btn.classList.remove('selected'));
+        
+        // Визуально фиксируем выбор
         const selectedBtn = this.elements.optionBtns[index];
         if (selectedBtn) {
             selectedBtn.classList.add('selected');
