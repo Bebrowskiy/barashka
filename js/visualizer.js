@@ -26,7 +26,8 @@ export class Visualizer {
             'unknown-pleasures': new UnknownPleasuresWebGL(),
             butterchurn: new ButterchurnPreset(),
             kawarp: new KawarpPreset(),
-            anime: new AnimePreset(),
+            anime: new AnimePreset('Anime (Waifu)', 'https://api.waifu.pics/sfw/waifu'),
+            neko: new AnimePreset('Anime (Neko)', 'https://api.waifu.pics/sfw/neko'),
         };
 
         this.activePresetKey = visualizerSettings.getPreset();

@@ -1,12 +1,12 @@
 // js/visualizers/anime.js
 
 export class AnimePreset {
-    constructor() {
-        this.name = 'Anime (Waifu)';
+    constructor(presetName = 'Anime (Waifu)', endpoint = 'https://api.waifu.pics/sfw/waifu') {
+        this.name = presetName;
+        this.endpoint = endpoint;
         this.contextType = '2d';
         
         this._imageObject = new Image();
-        this._imageObject.crossOrigin = 'anonymous';
         this._isImageReady = false;
         
         this._imageObject.onload = () => {
@@ -65,7 +65,7 @@ export class AnimePreset {
     async _fetchNewWaifu() {
         this._isImageReady = false;
         try {
-            const res = await fetch('https://api.waifu.pics/sfw/waifu');
+            const res = await fetch(this.endpoint);
             const data = await res.json();
             if (data && data.url) {
                 this._imageObject.src = data.url;
