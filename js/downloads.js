@@ -274,7 +274,20 @@ async function downloadTrackBlob(track, quality, api, lyricsManager = null, sign
         artist: track.artist || (track.artists && track.artists.length > 0 ? track.artists[0] : null),
     };
 
-    // MP3_320 is not a native TIDAL quality, we download LOSSLESS and convert
+    const isYouTube = typeof track.id === 'string' && track.id.startsWith('y:');
+
+    if (isYouTube) {
+        // YouTube: simple download via stream URL
+        const streamUrl = await api.getStreamUrl(track.id, quality, { signal });
+        const response = await fetch(streamUrl, { cache: 'no-store', signal });
+        if (!response.ok) throw new Error(`Failed to fetch track: ${response.status}`);
+        let blob = await response.blob();
+        const extension = await getExtensionFromBlob(blob);
+        blob = await addMetadataToAudio(blob, enrichedTrack, api, quality);
+        return { blob, extension };
+    }
+
+    // Tidal/Qobuz path below
     const downloadQuality = quality === 'MP3_320' ? 'LOSSLESS' : quality;
 
     try {
@@ -288,7 +301,6 @@ async function downloadTrackBlob(track, quality, api, lyricsManager = null, sign
                     ...(fullTrack.album || {}),
                     ...(enrichedTrack.album || {}),
                 },
-                // Preserve explicit disc fields from either source
                 discNumber: enrichedTrack.discNumber ?? fullTrack.discNumber,
                 volumeNumber: enrichedTrack.volumeNumber ?? fullTrack.volumeNumber,
             };

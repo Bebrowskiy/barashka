@@ -265,11 +265,16 @@ class GuessTheTrackGame {
         try {
             this.localAudio.pause();
             
-            // Получаем ссылку на стрим
             const streamUrl = await this.player.api.getStreamUrl(track.id, 'HIGH');
             this.localAudio.src = streamUrl;
             
-            this.localAudio.currentTime = this.previewStartTime;
+            const isYouTube = typeof track.id === 'string' && track.id.startsWith('y:');
+            const duration = track.duration || 0;
+            let startTime = this.previewStartTime;
+            if (isYouTube && duration > 0 && duration < startTime + this.previewDuration / 1000 + 5) {
+                startTime = Math.max(0, Math.floor(duration * 0.2));
+            }
+            this.localAudio.currentTime = startTime;
             
             // Предварительно показываем полный бар, пока ждем загрузку буфера
             this.elements.progressBar.style.transition = 'none';

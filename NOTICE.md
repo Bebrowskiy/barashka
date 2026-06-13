@@ -30,7 +30,7 @@ The following major modifications have been made to the original Monochrome proj
 
 3. **Endless Mix 2.0**
    - Enhanced infinite music recommendations
-   - AI-powered track suggestions
+   - Умные рекомендации треков
    - Aurora banner UI
 
 4. **Guess The Track Game** (`js/guess-the-track.js`)

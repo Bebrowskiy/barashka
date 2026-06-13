@@ -213,7 +213,7 @@ export class Player {
 
                 if (coverEl) {
                     const videoCoverUrl = track.album?.videoCover
-                        ? this.api.tidalAPI.getVideoCoverUrl(track.album.videoCover)
+                        ? this.api.getVideoCoverUrl(track.album.videoCover)
                         : null;
                     const coverUrl = videoCoverUrl || this.api.getCoverUrl(track.album?.cover);
 
@@ -488,7 +488,7 @@ export class Player {
         const coverEl = document.querySelector('.now-playing-bar .cover');
         if (coverEl) {
             const videoCoverUrl = track.album?.videoCover
-                ? this.api.tidalAPI.getVideoCoverUrl(track.album.videoCover)
+                ? this.api.getVideoCoverUrl(track.album.videoCover)
                 : null;
             const coverUrl = videoCoverUrl || this.api.getCoverUrl(track.album?.cover);
 
@@ -623,10 +623,10 @@ export class Player {
                 const played = await this.safePlay();
                 if (!played) return;
             } else {
-                const isQobuz = String(track.id).startsWith('q:');
+                const isDirectStreamProvider = String(track.id).startsWith('q:') || String(track.id).startsWith('y:');
 
-                if (isQobuz) {
-                    // Qobuz: skip getTrack call, directly fetch stream URL
+                if (isDirectStreamProvider) {
+                    // Qobuz/YouTube: skip Tidal lookup and resolve a playable URL directly.
                     this.currentRgValues = null;
                     this.applyReplayGain();
 

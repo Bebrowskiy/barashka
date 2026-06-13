@@ -4,7 +4,7 @@
 
 # 🎵 Barashka Music Player
 
-> A modern, minimalist music player for managing your local media library with streaming capabilities through Tidal and Qobuz APIs.
+> A minimalist music player for your collection. Tidal, Qobuz, and local files.
 >
 > **Based on:** [Monochrome](https://github.com/monochrome-music/monochrome) by [@monochrome-music](https://github.com/monochrome-music)
 
@@ -58,7 +58,7 @@
 - **Tidal API**: Access Tidal's music catalog
 - **Qobuz API**: Stream from Qobuz
 - **Multiple Instances**: Support for multiple API endpoints
-- **Endless Mix**: AI-powered infinite music recommendations
+- **Endless Mix**: Персонализированные рекомендации на основе твоих вкусов
 
 ### 🎨 User Interface
 
@@ -491,6 +491,6 @@ git push origin feature/your-feature
 
 ---
 
-> 🎶 _Music is the language of the soul. Let your player sound perfect._
+> 🎶 _Listen the way you want._
 
 ---

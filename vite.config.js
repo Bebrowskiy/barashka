@@ -1,6 +1,8 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import authGatePlugin from './vite-plugin-auth-gate.js';
+import discordRpcPlugin from './vite-plugin-discord-rpc.js';
 
 export default defineConfig(({ mode }) => {
     return {
@@ -19,6 +21,18 @@ export default defineConfig(({ mode }) => {
             port: 4173,
             strictPort: true,
             allowedHosts: ['12ea-109-61-46-145.ngrok-free.app'],
+            proxy: {
+                '/piped': {
+                    target: 'https://api.piped.private.coffee',
+                    changeOrigin: true,
+                    rewrite: (path) => path.replace(/^\/piped/, ''),
+                    configure: (proxy) => {
+                        proxy.on('error', (err) => {
+                            console.warn('Piped proxy error:', err.message);
+                        });
+                    },
+                },
+            },
             fs: {
                 allow: ['.', 'node_modules'],
             },
@@ -31,8 +45,13 @@ export default defineConfig(({ mode }) => {
             outDir: 'dist',
             emptyOutDir: true,
         },
+        test: {
+            globals: true,
+            environment: 'jsdom',
+        },
         plugins: [
             authGatePlugin(),
+            discordRpcPlugin(),
             VitePWA({
                 registerType: 'prompt',
                 workbox: {
@@ -41,9 +60,7 @@ export default defineConfig(({ mode }) => {
                     maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
                     navigateFallback: '/index.html',
                     navigateFallbackDenylist: [/^\/_/],
-                    runtimeCaching: [
-                        // ...твои существующие правила
-                    ],
+                    runtimeCaching: [],
                 },
                 includeAssets: ['discord.html'],
                 manifest: false,

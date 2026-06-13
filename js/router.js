@@ -36,13 +36,26 @@ export function createRouter(ui) {
         }
 
         // Helper to extract provider prefix and ID from params
-        // Supports formats like: /track/t/123 (Tidal), /track/q/123 (Qobuz), /track/123 (default)
+        // Supports formats like: /track/t/123 (Tidal), /track/q/123 (Qobuz),
+        // /track/y/123 (YouTube), and prefixed IDs like /track/y:123.
         const extractProviderAndId = (p) => {
             if (p.startsWith('t/')) {
                 return { provider: 'tidal', id: p.slice(2) };
             }
             if (p.startsWith('q/')) {
                 return { provider: 'qobuz', id: p.slice(2) };
+            }
+            if (p.startsWith('y/')) {
+                return { provider: 'youtube', id: p.slice(2) };
+            }
+            if (p.startsWith('t:')) {
+                return { provider: 'tidal', id: p };
+            }
+            if (p.startsWith('q:')) {
+                return { provider: 'qobuz', id: p };
+            }
+            if (p.startsWith('y:')) {
+                return { provider: 'youtube', id: p };
             }
             return { provider: null, id: p };
         };

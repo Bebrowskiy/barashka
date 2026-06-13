@@ -170,6 +170,7 @@
 
         <div id="fullscreen-cover-overlay" style="display: none">
             <div class="fullscreen-cover-content">
+                <video id="fullscreen-video-canvas" style="display: none;" muted loop playsinline></video>
                 <canvas id="visualizer-canvas"></canvas>
                 <button id="toggle-ui-btn" class="fullscreen-ui-toggle" title="Toggle UI">
                     <svg
@@ -3551,6 +3552,10 @@
                         <h2 class="section-title">Similar Tracks</h2>
                         <div class="track-list" id="track-detail-similar-tracks"></div>
                     </section>
+                    <section class="content-section" id="track-versions-section" style="display: none">
+                        <h2 class="section-title">Other Versions</h2>
+                        <div class="track-list" id="track-detail-versions"></div>
+                    </section>
                 </div>
 
                 <div id="page-profile" class="page">
@@ -3692,6 +3697,7 @@
                                     <div class="theme-option" data-theme="monochrome">Black</div>
                                     <div class="theme-option" data-theme="white">White</div>
                                     <div class="theme-option" data-theme="dark">Dark</div>
+                                    <div class="theme-option" data-theme="modern">Modern</div>
                                     <div class="theme-option" data-theme="lighty">Lighty</div>
                                     <div class="theme-option" data-theme="purple">Purple</div>
                                     <div class="theme-option" data-theme="forest">Forest</div>
@@ -4740,6 +4746,7 @@
                                         <span class="description">Default service for searching and streaming</span>
                                     </div>
                                     <select id="music-provider-setting">
+                                        <option value="youtube">YouTube</option>
                                         <option value="tidal">Tidal</option>
                                         <option value="qobuz">Qobuz</option>
                                     </select>
