@@ -1,10 +1,5 @@
-# Docker
-.docker/
-docker-compose.override.yml
-
 # Dependencies
 node_modules/
-bun.lockb
 
 # Build outputs
 dist/
@@ -18,12 +13,10 @@ build/
 # Git
 .git/
 .gitignore
-.gitattributes
 
 # Documentation
 *.md
 !README.md
-docs/
 
 # IDE
 .idea/
@@ -41,20 +34,8 @@ npm-debug.log*
 
 # Testing
 coverage/
-.nyc_output/
 
-# Temporary
+# Temp
 tmp/
 temp/
 *.tmp
-
-# Vite
-.vite/
-
-# Neutralino
-bin/
-resources/tmp/
-neutralinojs.log
-
-# Extensions build
-extensions/*/dist/

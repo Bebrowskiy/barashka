@@ -15,14 +15,14 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '24'
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
       run: npm ci
 
     - name: Build project
-      run: npm run build:web
+      run: npm run build
       env:
         NODE_ENV: production
 
@@ -40,28 +40,17 @@ jobs:
         SSH_HOST: ${{ secrets.SSH_HOST }}
         SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       run: |
-        # Копируем ТОЛЬКО собранную папку dist и необходимые файлы
         rsync -avz --delete \
           --exclude 'node_modules' \
           --exclude '.git' \
           --exclude '.env' \
-          --exclude 'js/' \
-          --exclude 'public/' \
-          --exclude 'functions/' \
-          --exclude 'extensions/' \
-          --exclude 'scripts/' \
           ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/barashka
 
-        # На сервере НЕ собираем, а только проверяем что dist на месте
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd ~/barashka
 
-          # Проверяем что dist существует
           if [ ! -d "dist" ]; then
             echo "ERROR: dist directory not found!"
             exit 1
           fi
-
-          # Если нужно - перезапускаем (но для статики это не требуется)
-          # pm2 restart barashka 2>/dev/null || true
         EOF
