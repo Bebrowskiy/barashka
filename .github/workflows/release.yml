@@ -25,103 +25,49 @@ jobs:
       - run: npm test
 
   # ============================================================================
-  # Job 2: Build web frontend
+  # Job 2: Build web + source archive + create release
   # ============================================================================
-  build-web:
-    name: Build Web
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-        env:
-          NODE_ENV: production
-      - run: zip -r dist.zip dist/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist.zip
-          retention-days: 1
-
-  # ============================================================================
-  # Job 3: Create source archive
-  # ============================================================================
-  build-source:
-    name: Source Archive
+  build:
+    name: Build & Release
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Create source archive
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          git archive --format=tar.gz --prefix="barashka-${TAG}/" -o "barashka-${TAG}-src.tar.gz" HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: source
-          path: barashka-*-src.tar.gz
-          retention-days: 1
 
-  # ============================================================================
-  # Job 4: Build Tauri desktop apps (matrix: Windows, macOS, Linux)
-  # ============================================================================
-  build-desktop:
-    name: Desktop (${{ matrix.platform }})
-    needs: [build-web, build-source]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: windows-latest
-          - platform: macos-latest
-          - platform: ubuntu-22.04
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
-      - name: Build web assets and copy to src-tauri/dist
-        shell: bash
-        run: |
-          npm run build
-          cp -r dist src-tauri/dist
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Barashka ${{ github.ref_name }}'
-          releaseBody: 'See the assets below for downloadable installers.'
-          releaseDraft: false
-          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
 
-  # ============================================================================
-  # Job 5: Upload web dist + source archive to the release
-  # ============================================================================
-  upload-extras:
-    name: Upload Web + Source
-    needs: [build-web, build-source, build-desktop]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-      - name: Upload to release
+      - run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Package web build
+        run: zip -r dist.zip dist/
+
+      - name: Create source archive
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          git archive --format=tar.gz --prefix="barashka-${TAG}/" -o "barashka-${TAG}-src.tar.gz" HEAD
+
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" dist.zip --clobber
-          gh release upload "${{ github.ref_name }}" barashka-*-src.tar.gz --clobber
+          TAG="${GITHUB_REF#refs/tags/}"
+          PRERELEASE=""
+          if echo "$TAG" | grep -qE '\-(alpha|beta|rc)'; then
+            PRERELEASE="--prerelease"
+          fi
+          gh release create "$TAG" \
+            --title "Barashka $TAG" \
+            --notes "See the assets below for downloadable files." \
+            $PRERELEASE \
+            dist.zip \
+            barashka-*-src.tar.gz
