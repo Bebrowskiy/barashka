@@ -90,6 +90,10 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - name: Build web assets and copy to src-tauri/dist
+        run: |
+          npm run build
+          cp -r dist src-tauri/dist
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,7 +103,6 @@ jobs:
           releaseBody: 'See the assets below for downloadable installers.'
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
-          distPath: dist
 
   # ============================================================================
   # Job 5: Upload web dist + source archive to the release
