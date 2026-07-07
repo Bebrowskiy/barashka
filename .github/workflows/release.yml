@@ -10,49 +10,71 @@ permissions:
 
 jobs:
   # ============================================================================
-  # Job 1: Build web frontend
+  # Job 1: Run tests
+  # ============================================================================
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+
+  # ============================================================================
+  # Job 2: Build web frontend
   # ============================================================================
   build-web:
     name: Build Web
+    needs: test
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npm run lint
-
-      - name: Build project
-        run: npm run build
+      - run: npm ci
+      - run: npm run build
         env:
           NODE_ENV: production
-
-      - name: Package dist
-        run: zip -r dist.zip dist/
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+      - run: zip -r dist.zip dist/
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist.zip
           retention-days: 1
 
   # ============================================================================
-  # Job 2: Build Tauri desktop apps (matrix: Windows, macOS, Linux)
+  # Job 3: Create source archive
+  # ============================================================================
+  build-source:
+    name: Source Archive
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create source archive
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          git archive --format=tar.gz --prefix="barashka-${TAG}/" -o "barashka-${TAG}-src.tar.gz" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: barashka-*-src.tar.gz
+          retention-days: 1
+
+  # ============================================================================
+  # Job 4: Build Tauri desktop apps (matrix: Windows, macOS, Linux)
   # ============================================================================
   build-desktop:
     name: Desktop (${{ matrix.platform }})
-    needs: build-web
+    needs: [build-web, build-source]
     strategy:
       fail-fast: false
       matrix:
@@ -63,24 +85,15 @@ jobs:
             targets: 'dmg,app'
           - platform: ubuntu-22.04
             targets: 'deb,appimage'
-
     runs-on: ${{ matrix.platform }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -88,25 +101,26 @@ jobs:
           releaseName: 'Barashka ${{ github.ref_name }}'
           releaseBody: 'See the assets below for downloadable installers.'
           releaseDraft: false
-          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') || contains(github.ref, '-alpha') }}
+          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           targets: ${{ matrix.targets }}
 
   # ============================================================================
-  # Job 3: Upload web dist to the release created by tauri-action
+  # Job 5: Upload web dist + source archive to the release
   # ============================================================================
-  upload-web-dist:
-    name: Upload Web Dist
-    needs: [build-web, build-desktop]
+  upload-extras:
+    name: Upload Web + Source
+    needs: [build-web, build-source, build-desktop]
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dist
-
-      - name: Upload dist.zip to release
+      - uses: actions/download-artifact@v4
+        with:
+          name: source
+      - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ github.ref_name }}" dist.zip --clobber
+          gh release upload "${{ github.ref_name }}" barashka-*-src.tar.gz --clobber
