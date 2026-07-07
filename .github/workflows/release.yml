@@ -80,11 +80,8 @@ jobs:
       matrix:
         include:
           - platform: windows-latest
-            targets: 'msi,nsis'
           - platform: macos-latest
-            targets: 'dmg,app'
           - platform: ubuntu-22.04
-            targets: 'deb,appimage'
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +99,6 @@ jobs:
           releaseBody: 'See the assets below for downloadable installers.'
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
-          targets: ${{ matrix.targets }}
 
   # ============================================================================
   # Job 5: Upload web dist + source archive to the release
