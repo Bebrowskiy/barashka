@@ -91,6 +91,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Build web assets and copy to src-tauri/dist
+        shell: bash
         run: |
           npm run build
           cp -r dist src-tauri/dist
