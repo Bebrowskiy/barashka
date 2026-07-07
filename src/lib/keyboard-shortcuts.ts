@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { audioEngine } from './audio-engine';
 
 interface ShortcutHandlers {
@@ -13,49 +13,53 @@ interface ShortcutHandlers {
     toggleFullscreen: () => void;
     toggleQueue: () => void;
     toggleLyrics: () => void;
+    showShortcuts: () => void;
 }
 
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
+    const handlersRef = useRef(handlers);
+    handlersRef.current = handlers;
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if typing in input/textarea
             const target = e.target as HTMLElement;
             if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
                 return;
             }
 
+            const h = handlersRef.current;
             const { key, ctrlKey, metaKey, shiftKey } = e;
             const mod = ctrlKey || metaKey;
 
             switch (key) {
                 case ' ':
                     e.preventDefault();
-                    handlers.togglePlay();
+                    h.togglePlay();
                     break;
 
                 case 'ArrowRight':
                     if (mod) {
                         e.preventDefault();
-                        handlers.playNext();
+                        h.playNext();
                     } else if (shiftKey) {
                         e.preventDefault();
-                        handlers.seekRelative(10);
+                        h.seekRelative(10);
                     } else {
                         e.preventDefault();
-                        handlers.seekRelative(5);
+                        h.seekRelative(5);
                     }
                     break;
 
                 case 'ArrowLeft':
                     if (mod) {
                         e.preventDefault();
-                        handlers.playPrev();
+                        h.playPrev();
                     } else if (shiftKey) {
                         e.preventDefault();
-                        handlers.seekRelative(-10);
+                        h.seekRelative(-10);
                     } else {
                         e.preventDefault();
-                        handlers.seekRelative(-5);
+                        h.seekRelative(-5);
                     }
                     break;
 
@@ -63,7 +67,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                     if (!mod) {
                         e.preventDefault();
                         const current = audioEngine.getState().volume;
-                        handlers.setVolume(Math.min(1, current + 0.05));
+                        h.setVolume(Math.min(1, current + 0.05));
                     }
                     break;
 
@@ -71,21 +75,21 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                     if (!mod) {
                         e.preventDefault();
                         const current = audioEngine.getState().volume;
-                        handlers.setVolume(Math.max(0, current - 0.05));
+                        h.setVolume(Math.max(0, current - 0.05));
                     }
                     break;
 
                 case 'm':
                 case 'M':
                     e.preventDefault();
-                    handlers.toggleMute();
+                    h.toggleMute();
                     break;
 
                 case 's':
                 case 'S':
                     if (!mod) {
                         e.preventDefault();
-                        handlers.toggleShuffle();
+                        h.toggleShuffle();
                     }
                     break;
 
@@ -93,7 +97,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'R':
                     if (!mod) {
                         e.preventDefault();
-                        handlers.toggleRepeat();
+                        h.toggleRepeat();
                     }
                     break;
 
@@ -101,7 +105,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'F':
                     if (!mod) {
                         e.preventDefault();
-                        handlers.toggleFullscreen();
+                        h.toggleFullscreen();
                     }
                     break;
 
@@ -109,7 +113,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'Q':
                     if (!mod) {
                         e.preventDefault();
-                        handlers.toggleQueue();
+                        h.toggleQueue();
                     }
                     break;
 
@@ -117,7 +121,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'L':
                     if (!mod) {
                         e.preventDefault();
-                        handlers.toggleLyrics();
+                        h.toggleLyrics();
                     }
                     break;
 
@@ -125,7 +129,7 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'N':
                     if (mod) {
                         e.preventDefault();
-                        handlers.playNext();
+                        h.playNext();
                     }
                     break;
 
@@ -133,7 +137,14 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
                 case 'P':
                     if (mod) {
                         e.preventDefault();
-                        handlers.playPrev();
+                        h.playPrev();
+                    }
+                    break;
+
+                case '?':
+                    if (shiftKey) {
+                        e.preventDefault();
+                        h.showShortcuts();
                     }
                     break;
             }
@@ -141,5 +152,5 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handlers]);
+    }, []);
 }

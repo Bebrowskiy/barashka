@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Volume2, User, Bell, Palette, Globe, Shield, Headphones, HardDrive, Smartphone, Zap, SlidersHorizontal, Menu, Search, Link2, Music, Cloud, Download, Timer, Waves, ListMusic, Keyboard, Eye, FileText } from 'lucide-react';
+import { Volume2, Palette, Globe, Headphones, Zap, Menu, Search, Link2, Music, Cloud, Download, Timer, ListMusic, Eye, FileText, Calendar } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 import { logger } from '../lib/youtube-api';
 import { profileSettings, discordRPCSettings } from '../lib/storage';
-import { discordRPC } from '../lib/discord-rpc';
 import {
-    qualitySettings,
     replayGainSettings,
     crossfadeSettings,
     audioEffectsSettings,
@@ -14,6 +12,7 @@ import {
     cardSettings,
     sidebarSettings,
     musicProviderSettings,
+    jamendoSettings,
     downloadSettings,
     lastFMSettings,
     listenBrainzSettings,
@@ -43,6 +42,8 @@ const CROSSFADE_CURVES = ['linear', 'logarithmic', 'exponential', 'sine', 'cosin
 
 const PROVIDERS = [
     { value: 'youtube', label: 'YouTube Music' },
+    { value: 'jamendo', label: 'Jamendo Music' },
+    { value: 'internet_archive', label: 'Internet Archive' },
 ] as const;
 
 export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }: { onMenuClick?: () => void; onSyncOpen?: () => void; onOpenProfile?: () => void }) {
@@ -82,6 +83,7 @@ export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }:
 
     // Provider
     const [provider, setProvider] = useState(musicProviderSettings.get());
+    const [jamendo, setJamendo] = useState(jamendoSettings.get());
 
     // Downloads
     const [downloads, setDownloads] = useState(downloadSettings.get());
@@ -721,6 +723,65 @@ export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }:
                             </div>
                         </div>
 
+                        {/* Jamendo Settings */}
+                        {provider === 'jamendo' && (
+                            <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/[0.05] overflow-hidden shadow-sm dark:shadow-none">
+                                <div className="p-5 sm:p-6 flex items-center gap-4 border-b border-slate-100 dark:border-white/[0.05]">
+                                    <Cloud className="w-5 h-5 text-orange-500 dark:text-orange-400" />
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-white text-[15px]">Jamendo Settings</h3>
+                                        <p className="text-[13px] text-slate-500 dark:text-slate-400">Configure your Jamendo API access</p>
+                                    </div>
+                                </div>
+                                <div className="p-5 sm:p-6 space-y-4">
+                                    <div>
+                                        <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Client ID</label>
+                                        <input
+                                            type="text"
+                                            value={jamendo.clientId}
+                                            onChange={e => {
+                                                const updated = { ...jamendo, clientId: e.target.value };
+                                                setJamendo(updated);
+                                                jamendoSettings.set(updated);
+                                            }}
+                                            placeholder="Enter your Jamendo client_id"
+                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/[0.08] rounded-2xl text-[14px] font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all"
+                                        />
+                                        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                                            Get your client_id at <a href="https://devportal.jamendo.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">devportal.jamendo.com</a>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">Audio Format</label>
+                                        <div className="flex gap-2">
+                                            {[
+                                                { value: 'mp31', label: 'MP3 96kbps' },
+                                                { value: 'mp32', label: 'MP3 VBR' },
+                                                { value: 'ogg', label: 'OGG' },
+                                                { value: 'flac', label: 'FLAC' },
+                                            ].map(f => (
+                                                <button
+                                                    key={f.value}
+                                                    onClick={() => {
+                                                        const updated = { ...jamendo, audioFormat: f.value as typeof jamendo.audioFormat };
+                                                        setJamendo(updated);
+                                                        jamendoSettings.set(updated);
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all ${
+                                                        jamendo.audioFormat === f.value
+                                                            ? 'bg-indigo-500 text-white'
+                                                            : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+                                                    }`}
+                                                >
+                                                    {f.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Sidebar */}
                         <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/[0.05] overflow-hidden shadow-sm dark:shadow-none">
                             <div className="p-5 sm:p-6 flex items-center gap-4 border-b border-slate-100 dark:border-white/[0.05]">
@@ -1127,26 +1188,6 @@ export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }:
                                 </div>
                                 <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                             </div>
-
-                            <div onClick={() => showToast("Notification preferences")} className="p-5 sm:p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors border-b border-slate-100 dark:border-white/[0.05]">
-                                <div className="flex items-center gap-4">
-                                    <Bell className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white text-[15px]">Notifications</h3>
-                                        <p className="text-[13px] text-slate-500 dark:text-slate-400">Manage push notifications</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div onClick={() => showToast("Privacy settings")} className="p-5 sm:p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <Shield className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                                    <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white text-[15px]">Privacy & Social</h3>
-                                        <p className="text-[13px] text-slate-500 dark:text-slate-400">Listening activity is public</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="bg-white dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/[0.05] overflow-hidden shadow-sm dark:shadow-none">
@@ -1228,32 +1269,9 @@ export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }:
                                 )}
                             </div>
                         </div>
-
-                        <div className="flex justify-center pt-8">
-                            <button
-                                onClick={() => {
-                                    setActiveView('home');
-                                    showToast(t('toast-logged-out'));
-                                }}
-                                className="text-rose-500 font-bold hover:bg-rose-50 dark:hover:bg-rose-500/10 px-6 py-3 rounded-full transition-colors"
-                            >
-                                {t('settings-logout')}
-                            </button>
-                        </div>
                     </section>
                 )}
             </div>
         </div>
-    );
-}
-
-function Calendar({ className }: { className?: string }) {
-    return (
-        <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-            <line x1="16" x2="16" y1="2" y2="6" />
-            <line x1="8" x2="8" y1="2" y2="6" />
-            <line x1="3" x2="21" y1="10" y2="10" />
-        </svg>
     );
 }

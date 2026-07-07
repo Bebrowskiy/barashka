@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Heart, ListMusic, Clock, Music, BarChart3, Settings, Pencil } from 'lucide-react';
+import { ArrowLeft, Heart, ListMusic, Clock, Music, BarChart3, Pencil, Flame, Play } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 import { usePlayer } from '../context/PlayerContext';
 import { db } from '../lib/db';
@@ -12,15 +12,34 @@ interface ProfileStats {
     playlists: number;
     historyCount: number;
     totalListeningTime: number;
+    totalPlays: number;
+    uniqueTracks: number;
+    currentStreak: number;
+    longestStreak: number;
 }
 
-export default function ProfileView({ onBack, onOpenSettings, onEditProfile, refreshKey }: { onBack: () => void; onOpenSettings?: () => void; onEditProfile?: () => void; refreshKey?: number }) {
-    const { t } = useI18n();
+interface TopTrack {
+    id: string;
+    title: string;
+    artist: string;
+    cover?: string;
+    playCount: number;
+}
+
+interface DailyHour {
+    date: string;
+    hours: number;
+}
+
+export default function ProfileView({ onBack, onOpenSettings: _onOpenSettings, onEditProfile, refreshKey }: { onBack: () => void; onOpenSettings?: () => void; onEditProfile?: () => void; refreshKey?: number }) {
+    const { t: _t } = useI18n();
     const { likedTracks } = usePlayer();
     const [profile, setProfile] = useState(profileSettings.get());
     const [stats, setStats] = useState<ProfileStats | null>(null);
     const [recentTracks, setRecentTracks] = useState<any[]>([]);
     const [topArtists, setTopArtists] = useState<{ name: string; count: number; cover?: string }[]>([]);
+    const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
+    const [dailyHours, setDailyHours] = useState<DailyHour[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,11 +50,12 @@ export default function ProfileView({ onBack, onOpenSettings, onEditProfile, ref
     const loadProfile = async () => {
         setLoading(true);
         try {
-            const [likedAlbums, likedArtists, playlists, history] = await Promise.all([
+            const [likedAlbums, likedArtists, playlists, history, playStats] = await Promise.all([
                 db.getFavorites('album'),
                 db.getFavorites('artist'),
                 db.getPlaylists(),
                 db.getHistory(500),
+                db.getPlayCountStats(),
             ]);
 
             let totalListeningTime = 0;
@@ -64,10 +84,16 @@ export default function ProfileView({ onBack, onOpenSettings, onEditProfile, ref
                 playlists: playlists.length,
                 historyCount: history.length,
                 totalListeningTime,
+                totalPlays: playStats.totalPlays,
+                uniqueTracks: playStats.uniqueTracks,
+                currentStreak: playStats.currentStreak,
+                longestStreak: playStats.longestStreak,
             });
 
             setRecentTracks(history.slice(0, 5));
             setTopArtists(sortedArtists);
+            setTopTracks(playStats.topTracks);
+            setDailyHours(playStats.dailyHours);
         } catch (err) {
             console.error('Failed to load profile:', err);
         } finally {
@@ -149,13 +175,83 @@ export default function ProfileView({ onBack, onOpenSettings, onEditProfile, ref
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
                                 <Clock className="w-5 h-5 text-sky-500 mb-2" />
-                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.historyCount}</p>
-                                <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Tracks Played</p>
+                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.uniqueTracks}</p>
+                                <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Unique Tracks</p>
+                            </div>
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
+                                <Play className="w-5 h-5 text-violet-500 mb-2" />
+                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.totalPlays}</p>
+                                <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Total Plays</p>
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
                                 <Music className="w-5 h-5 text-violet-500 mb-2" />
                                 <p className="text-2xl font-black text-slate-900 dark:text-white">{formatDuration(stats.totalListeningTime)}</p>
                                 <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Listen Time</p>
+                            </div>
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
+                                <Flame className="w-5 h-5 text-orange-500 mb-2" />
+                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.currentStreak}</p>
+                                <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Day Streak</p>
+                            </div>
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
+                                <Flame className="w-5 h-5 text-rose-500 mb-2" />
+                                <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.longestStreak}</p>
+                                <p className="text-[12px] text-slate-500 dark:text-slate-400 font-bold">Best Streak</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Listening Activity (Last 7 Days) */}
+                    {dailyHours.length > 0 && dailyHours.some(d => d.hours > 0) && (
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Listening Activity</h3>
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-2xl border border-slate-100 dark:border-white/[0.05]">
+                                <div className="flex items-end gap-2 h-24">
+                                    {dailyHours.map((day, i) => {
+                                        const maxHours = Math.max(...dailyHours.map(d => d.hours), 1);
+                                        const height = Math.max((day.hours / maxHours) * 100, 4);
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{day.hours > 0 ? `${day.hours}h` : ''}</span>
+                                                <div className="w-full flex-1 flex items-end">
+                                                    <div
+                                                        className="w-full rounded-t-md bg-indigo-500 dark:bg-indigo-400 transition-all"
+                                                        style={{ height: `${height}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{day.date}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Top Tracks */}
+                    {topTracks.length > 0 && (
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Top Tracks</h3>
+                            <div className="space-y-2">
+                                {topTracks.slice(0, 5).map((track, i) => (
+                                    <div key={track.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/[0.03] rounded-xl border border-slate-100 dark:border-white/[0.05]">
+                                        <span className="w-6 text-center text-sm font-bold text-slate-400">{i + 1}</span>
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-200 dark:bg-white/10 flex-shrink-0">
+                                            {track.cover ? (
+                                                <img src={track.cover} alt="" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                    <Music className="w-4 h-4" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{track.title}</p>
+                                            <p className="text-[12px] text-slate-500 dark:text-slate-400 truncate">{track.artist}</p>
+                                        </div>
+                                        <span className="text-[12px] font-bold text-indigo-500 dark:text-indigo-400">{track.playCount}x</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

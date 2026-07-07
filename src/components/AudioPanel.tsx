@@ -473,8 +473,6 @@ function SliderRow({
     marks?: { pos: number; label: string }[];
     onChange: (v: number) => void;
 }) {
-    const percent = ((value - min) / (max - min)) * 100;
-
     return (
         <div>
             <div className="flex items-center justify-between mb-2">

@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Home, Compass, Cloud, Heart, Mic2, FolderHeart, LayoutGrid, Plus, CloudSnow, Library, Settings, Info } from 'lucide-react';
+import { Home, Heart, Plus, Library, Settings, Info, FolderOpen } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useI18n } from '../lib/i18n';
 import { profileSettings } from '../lib/storage';
 
 const BarashkaLogo = () => (
     <div className="relative flex items-center justify-center w-12 h-12 rounded-[1.2rem] overflow-hidden shrink-0">
-        <img src="/assets/logo.svg" alt="Barashka" className="w-full h-full invert dark:invert-0" />
+        <img src="assets/logo.svg" alt="Barashka" className="w-full h-full invert dark:invert-0" />
     </div>
 );
 
 export default function Sidebar({ onClose, onOpenProfile }: { onClose?: () => void; onOpenProfile?: () => void }) {
     const [activeNav, setActiveNav] = useState('Home');
     const [profile, setProfile] = useState(profileSettings.get());
-    const { activeView, setActiveView, setIsCreatePlaylistOpen, openPlaylist, showToast, setIsAboutOpen } = usePlayer();
+    const { activeView, setActiveView, setIsCreatePlaylistOpen, openPlaylist, setIsAboutOpen } = usePlayer();
     const { t } = useI18n();
 
     useEffect(() => {
@@ -36,6 +36,8 @@ export default function Sidebar({ onClose, onOpenProfile }: { onClose?: () => vo
             setActiveNav('Settings');
         } else if (activeView === 'search') {
             setActiveNav('Search');
+        } else if (activeView === 'local') {
+            setActiveNav('');
         }
     }, [activeView]);
 
@@ -46,9 +48,8 @@ export default function Sidebar({ onClose, onOpenProfile }: { onClose?: () => vo
     ];
 
     const libraryItems = [
-        { icon: Heart, label: 'Liked Tracks', color: 'text-rose-500', bg: 'bg-rose-50' },
-        { icon: FolderHeart, label: 'Local Files', color: 'text-amber-500', bg: 'bg-amber-50' },
-        { icon: Cloud, label: 'Cloud Saves', color: 'text-sky-500', bg: 'bg-sky-50' },
+        { icon: Heart, label: 'Liked Tracks', color: 'text-rose-500', bg: 'bg-rose-50', action: () => openPlaylist('Liked Tracks') },
+        { icon: FolderOpen, label: 'Local Files', color: 'text-amber-500', bg: 'bg-amber-50', action: () => setActiveView('local') },
     ];
 
     return (
@@ -110,7 +111,7 @@ export default function Sidebar({ onClose, onOpenProfile }: { onClose?: () => vo
                         href="#"
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={(e) => { e.preventDefault(); openPlaylist(item.label); onClose?.(); }}
+                        onClick={(e) => { e.preventDefault(); item.action(); onClose?.(); }}
                         className="flex items-center gap-4 px-4 py-3 rounded-2xl font-bold text-[15px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all duration-200 group"
                     >
                         <div className={`w-9 h-9 flex items-center justify-center rounded-xl ${item.bg} dark:bg-white/5 group-hover:scale-105 transition-transform`}>
@@ -120,20 +121,6 @@ export default function Sidebar({ onClose, onOpenProfile }: { onClose?: () => vo
                     </motion.a>
                 ))}
 
-                <div className="h-4"></div>
-                {['Focus Fluff', 'Morning Pasture', 'Deep Sleep', 'Gym Sheep'].map((pl) => (
-                    <motion.a
-                        key={pl}
-                        href="#"
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={(e) => { e.preventDefault(); openPlaylist(pl); onClose?.(); }}
-                        className="flex items-center gap-4 px-5 py-3 rounded-2xl font-semibold text-[14px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
-                    >
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-indigo-500 transition-colors"></div>
-                        {pl}
-                    </motion.a>
-                ))}
             </div>
 
             <div className="mt-auto px-8 pb-2 pt-4 space-y-2">

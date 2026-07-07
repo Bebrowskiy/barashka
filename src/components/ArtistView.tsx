@@ -1,4 +1,4 @@
-import { Play, Pause, Heart, MoreHorizontal, Shuffle, ArrowLeft, BadgeCheck, Menu, Loader2, Users } from 'lucide-react';
+import { Play, Pause, MoreHorizontal, ArrowLeft, BadgeCheck, Menu, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
@@ -9,7 +9,7 @@ import type { Track } from '../types';
 
 export default function ArtistView({ onMenuClick }: { onMenuClick?: () => void }) {
     const { t } = useI18n();
-    const { selectedArtist, setActiveView, currentTrack, isPlaying, openPlaylist, playTrackWithQueue, showToast } = usePlayer();
+    const { selectedArtist, setActiveView, currentTrack, isPlaying, openPlaylist, playTrackWithQueue } = usePlayer();
     const [artistTracks, setArtistTracks] = useState<Track[]>([]);
     const [artistAlbums, setArtistAlbums] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);

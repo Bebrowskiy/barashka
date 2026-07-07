@@ -123,19 +123,22 @@ class DiscordRPC {
         const settings = discordRPCSettings.get();
         if (!settings.enabled) return;
 
+        if (this.initialized) return;
         this.initialized = true;
 
-        if (isTauri()) {
-            // Tauri handles RPC natively via Rust
-            return;
-        }
+        if (isTauri()) return;
 
         connectWs();
     }
 
     update(track: Track | null, isPlaying: boolean, elapsed: number = 0): void {
         const settings = discordRPCSettings.get();
-        if (!settings.enabled || !this.initialized) return;
+        if (!settings.enabled) return;
+
+        if (!this.initialized) {
+            this.init();
+        }
+        if (!this.initialized) return;
 
         const trackId = track?.id || null;
         if (trackId === this.lastTrackId && isPlaying === this.lastIsPlaying) return;

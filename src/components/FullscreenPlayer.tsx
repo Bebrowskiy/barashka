@@ -1,13 +1,12 @@
 import type React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Mic2, ChevronDown, MoreHorizontal, ListMusic, Heart, Plus, User, Disc, Share2, Download, ListPlus, X, BarChart3 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Mic2, ChevronDown, MoreHorizontal, ListMusic, Heart, User, Share2, Download, ListPlus, X } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useI18n } from '../lib/i18n';
 import { audioEngine } from '../lib/audio-engine';
 import { lyricsAPI, type LyricLine, type LyricsData } from '../lib/lyrics-api';
 import { downloadService } from '../lib/download-service';
 import { shareService } from '../lib/share-service';
-import Visualizer from './Visualizer';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 export default function FullscreenPlayer() {
@@ -20,7 +19,6 @@ export default function FullscreenPlayer() {
         isRepeat, toggleRepeat,
         volume, setVolume,
         isFullscreen, setIsFullscreen,
-        isQueueOpen, setIsQueueOpen,
         openArtist,
         showToast, playTrack,
         currentTime,
@@ -138,13 +136,6 @@ export default function FullscreenPlayer() {
                             />
                         )}
                         <div className="absolute inset-0 bg-black/50" />
-
-                        {/* Real Visualizer */}
-                        {isPlaying && activeTab === 'player' && (
-                            <div className="absolute inset-0 opacity-40 pointer-events-none">
-                                <Visualizer className="w-full h-full" />
-                            </div>
-                        )}
                     </div>
 
                     <div className="relative z-10 flex-1 flex flex-col h-[100dvh] overflow-hidden">

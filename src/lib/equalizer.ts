@@ -127,6 +127,10 @@ class EqualizerService {
 
         try {
             this.audioContext = new AudioContext();
+            // Browsers suspend AudioContext until user interaction
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
             this.source = this.audioContext.createMediaElementSource(audio);
 
             this.preampNode = this.audioContext.createGain();
@@ -276,12 +280,10 @@ class EqualizerService {
         this.notify();
     }
 
-    getAnalyser(): AnalyserNode | null {
-        return this.analyser;
-    }
-
-    getAudioContext(): AudioContext | null {
-        return this.audioContext;
+    resumeContext(): void {
+        if (this.audioContext?.state === 'suspended') {
+            this.audioContext.resume();
+        }
     }
 
     reset() {

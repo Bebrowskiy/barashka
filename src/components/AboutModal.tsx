@@ -33,7 +33,7 @@ export default function AboutModal() {
             
             <div className="flex flex-col items-center text-center mt-2">
                <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-sm dark:shadow-none border border-indigo-100/50 dark:border-indigo-500/20 overflow-hidden">
-                 <img src="/assets/logo.svg" alt="Barashka" className="w-14 h-14 invert dark:invert-0" />
+                  <img src="assets/logo.svg" alt="Barashka" className="w-14 h-14 invert dark:invert-0" />
                </div>
                
                <h2 className="text-3xl font-display font-black text-slate-900 dark:text-white tracking-tight">{t('about-title')}</h2>

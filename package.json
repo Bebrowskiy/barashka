@@ -1,14 +1,18 @@
 {
   "name": "barashka",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0-alpha.1",
   "type": "module",
   "description": "A minimalist music player for managing your local media library with streaming capabilities",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/ && tsc --noEmit",
+    "lint:fix": "eslint src/ --fix",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
@@ -54,13 +58,21 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tauri-apps/cli": "^2.10.1",
     "@types/node": "^22.14.0",
     "@types/qrcode": "^1.5.5",
+    "@vitest/coverage-v8": "^4.1.9",
     "esbuild": "^0.25.0",
+    "eslint": "^10.6.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "typescript-eslint": "^8.62.1",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=18.0.0",

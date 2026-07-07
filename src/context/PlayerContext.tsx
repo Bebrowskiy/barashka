@@ -1,12 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { audioEngine, type PlayerState } from '../lib/audio-engine';
 import { musicAPI } from '../lib/music-api';
 import { db } from '../lib/db';
-import { themeSettings, contentBlockingSettings, discordRPCSettings } from '../lib/storage';
+import { themeSettings, discordRPCSettings } from '../lib/storage';
 import { scrobbler } from '../lib/scrobbler';
 import { discordRPC } from '../lib/discord-rpc';
-import type { Track, Artist, Playlist, RepeatMode, QualityPreset } from '../types';
-import { REPEAT_MODE } from '../types';
+import type { Track, Album, Artist, Playlist, RepeatMode, QualityPreset } from '../types';
 
 export interface ArtistState {
     id: string;
@@ -24,6 +23,10 @@ interface PlayerContextType {
     togglePlay: () => void;
     likedTracks: Set<string>;
     toggleLike: (id: string, e?: React.MouseEvent) => void;
+    likedAlbums: Set<string>;
+    toggleAlbumLike: (album: Album, e?: React.MouseEvent) => void;
+    likedArtists: Set<string>;
+    toggleArtistLike: (artist: Artist, e?: React.MouseEvent) => void;
     isShuffle: boolean;
     toggleShuffle: () => void;
     isRepeat: RepeatMode;
@@ -50,8 +53,8 @@ interface PlayerContextType {
 
     activeMix: string | null;
     toggleMix: (mixId: string) => void;
-    activeView: 'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search';
-    setActiveView: (view: 'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search') => void;
+    activeView: 'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search' | 'local';
+    setActiveView: (view: 'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search' | 'local') => void;
     selectedArtist: ArtistState | null;
     openArtist: (artist: ArtistState | string) => void;
 
@@ -93,7 +96,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isQueueOpen, setIsQueueOpen] = useState(false);
     const [activeMix, setActiveMix] = useState<string | null>(null);
-    const [activeView, setActiveView] = useState<'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search'>('home');
+    const [activeView, setActiveView] = useState<'home' | 'artist' | 'library' | 'playlist' | 'settings' | 'search' | 'local'>('home');
     const [selectedArtist, setSelectedArtist] = useState<ArtistState | null>(null);
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
     const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
@@ -102,6 +105,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const [isAudioPanelOpen, setIsAudioPanelOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+    const [likedAlbums, setLikedAlbums] = useState<Set<string>>(new Set());
+    const [likedArtists, setLikedArtists] = useState<Set<string>>(new Set());
     const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>(() => {
         return themeSettings.get() || 'system';
     });
@@ -130,15 +135,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // Re-init Discord RPC when settings change
-    useEffect(() => {
-        return discordRPCSettings.get;
-    }, []);
-
     // Load liked tracks from DB on mount
     useEffect(() => {
         db.getFavorites('track').then((tracks) => {
             setLikedTracks(new Set(tracks.map(t => t.id)));
+        }).catch(console.error);
+        db.getFavorites('album').then((albums) => {
+            setLikedAlbums(new Set(albums.map(a => a.id)));
+        }).catch(console.error);
+        db.getFavorites('artist').then((artists) => {
+            setLikedArtists(new Set(artists.map(a => a.id)));
         }).catch(console.error);
     }, []);
 
@@ -292,6 +298,52 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
     }, [likedTracks]);
 
+    const toggleAlbumLike = useCallback(async (album: Album, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        const id = album.id;
+        const wasLiked = likedAlbums.has(id);
+
+        setLikedAlbums(prev => {
+            const next = new Set(prev);
+            if (wasLiked) next.delete(id); else next.add(id);
+            return next;
+        });
+        showToast(wasLiked ? 'Removed from library' : 'Added to library');
+
+        try {
+            await db.toggleFavorite('album', album);
+        } catch {
+            setLikedAlbums(prev => {
+                const next = new Set(prev);
+                if (wasLiked) next.add(id); else next.delete(id);
+                return next;
+            });
+        }
+    }, [likedAlbums]);
+
+    const toggleArtistLike = useCallback(async (artist: Artist, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        const id = artist.id;
+        const wasLiked = likedArtists.has(id);
+
+        setLikedArtists(prev => {
+            const next = new Set(prev);
+            if (wasLiked) next.delete(id); else next.add(id);
+            return next;
+        });
+        showToast(wasLiked ? 'Removed from library' : 'Added to library');
+
+        try {
+            await db.toggleFavorite('artist', artist);
+        } catch {
+            setLikedArtists(prev => {
+                const next = new Set(prev);
+                if (wasLiked) next.add(id); else next.delete(id);
+                return next;
+            });
+        }
+    }, [likedArtists]);
+
     const toggleShuffle = useCallback(() => {
         audioEngine.toggleShuffle();
     }, []);
@@ -320,6 +372,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const playTrackWithQueue = useCallback((track: Track, queue?: Track[], startIndex?: number) => {
         audioEngine.playTrack(track, queue, startIndex);
+    }, []);
+
+    const showToast = useCallback((msg: string) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3000);
     }, []);
 
     const addToQueue = useCallback((tracks: Track[]) => {
@@ -437,11 +494,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         audioEngine.setQuality(val);
     }, []);
 
-    const showToast = useCallback((msg: string) => {
-        setToastMessage(msg);
-        setTimeout(() => setToastMessage(null), 3000);
-    }, []);
-
     return (
         <PlayerContext.Provider value={{
             currentTrack: playerState.currentTrack,
@@ -454,6 +506,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             togglePlay,
             likedTracks,
             toggleLike,
+            likedAlbums,
+            toggleAlbumLike,
+            likedArtists,
+            toggleArtistLike,
             isShuffle: playerState.shuffleActive,
             toggleShuffle,
             isRepeat: playerState.repeatMode,

@@ -1,7 +1,7 @@
 import { type Track, type Album, type Artist, type Playlist } from '../types';
 
 const DB_NAME = 'BarashkaDB';
-const DB_VERSION = 9;
+const DB_VERSION = 12;
 
 function openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -32,6 +32,10 @@ function openDB(): Promise<IDBDatabase> {
                 const store = db.createObjectStore('downloads', { keyPath: 'id' });
                 store.createIndex('downloadedAt', 'downloadedAt', { unique: false });
             }
+            if (!db.objectStoreNames.contains('local_files')) {
+                const store = db.createObjectStore('local_files', { keyPath: 'id' });
+                store.createIndex('addedAt', 'addedAt', { unique: false });
+            }
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
@@ -44,23 +48,46 @@ class MusicDatabase {
         const tx = db.transaction('history_tracks', 'readwrite');
         const store = tx.objectStore('history_tracks');
 
-        // Remove existing entry for same track
-        const index = store.index('timestamp');
-        const cursor = index.openCursor();
-        cursor.onsuccess = (event) => {
-            const cursorResult = (event.target as IDBRequest<IDBCursorWithValue>).result;
-            if (cursorResult) {
-                if (cursorResult.value.id === track.id) {
-                    cursorResult.delete();
+        // Check if track already exists
+        const existing = await new Promise<any | undefined>((resolve) => {
+            const index = store.index('timestamp');
+            const cursor = index.openCursor();
+            cursor.onsuccess = (event) => {
+                const cursorResult = (event.target as IDBRequest<IDBCursorWithValue>).result;
+                if (cursorResult) {
+                    if (cursorResult.value.id === track.id) {
+                        resolve(cursorResult.value);
+                        return;
+                    }
+                    cursorResult.continue();
+                } else {
+                    resolve(undefined);
                 }
-                cursorResult.continue();
-            }
-        };
+            };
+        });
+
+        const playCount = existing ? (existing.play_count || 1) + 1 : 1;
+
+        // Remove old entry if exists
+        if (existing) {
+            const delIndex = store.index('timestamp');
+            const delCursor = delIndex.openCursor();
+            delCursor.onsuccess = (event) => {
+                const cursorResult = (event.target as IDBRequest<IDBCursorWithValue>).result;
+                if (cursorResult) {
+                    if (cursorResult.value.id === track.id) {
+                        cursorResult.delete();
+                    }
+                    cursorResult.continue();
+                }
+            };
+        }
 
         store.put({
             ...this.minifyTrack(track),
             timestamp: Date.now(),
             addedAt: new Date().toISOString(),
+            play_count: playCount,
         });
 
         return new Promise((resolve, reject) => {
@@ -103,6 +130,98 @@ class MusicDatabase {
             tx.oncomplete = () => { db.close(); resolve(); };
             tx.onerror = () => { db.close(); reject(tx.error); };
         });
+    }
+
+    async getPlayCountStats(): Promise<{
+        topTracks: { id: string; title: string; artist: string; cover?: string; playCount: number }[];
+        totalPlays: number;
+        uniqueTracks: number;
+        listeningDays: number;
+        currentStreak: number;
+        longestStreak: number;
+        dailyHours: { date: string; hours: number }[];
+    }> {
+        const allHistory = await this.getHistory(10000);
+        const trackMap = new Map<string, { id: string; title: string; artist: string; cover?: string; playCount: number; duration: number }>();
+        const daySet = new Set<string>();
+        const dailySeconds = new Map<string, number>();
+
+        let totalPlays = 0;
+
+        for (const entry of allHistory) {
+            const playCount = (entry as any).play_count || 1;
+            totalPlays += playCount;
+
+            const existing = trackMap.get(entry.id);
+            if (existing) {
+                existing.playCount += playCount;
+            } else {
+                trackMap.set(entry.id, {
+                    id: entry.id,
+                    title: entry.title,
+                    artist: entry.artist || 'Unknown',
+                    cover: entry.cover,
+                    playCount,
+                    duration: (entry as any).duration || 0,
+                });
+            }
+
+            const ts = (entry as any).timestamp;
+            if (ts) {
+                const date = new Date(ts);
+                const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                daySet.add(dayKey);
+                const dur = (entry as any).duration || 0;
+                dailySeconds.set(dayKey, (dailySeconds.get(dayKey) || 0) + dur * playCount);
+            }
+        }
+
+        const topTracks = [...trackMap.values()]
+            .sort((a, b) => b.playCount - a.playCount)
+            .slice(0, 10);
+
+        // Calculate streaks
+        const sortedDays = [...daySet].sort();
+        let currentStreak = 0;
+        let longestStreak = 0;
+        let streak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 0; i < 365; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            if (daySet.has(key)) {
+                streak++;
+                if (i === 0 || currentStreak > 0) currentStreak = streak;
+            } else {
+                longestStreak = Math.max(longestStreak, streak);
+                streak = 0;
+                if (i > 0 && currentStreak > 0) break;
+            }
+        }
+        longestStreak = Math.max(longestStreak, streak);
+
+        // Last 7 days hours
+        const dailyHours: { date: string; hours: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const label = d.toLocaleDateString('en', { weekday: 'short' });
+            dailyHours.push({ date: label, hours: Math.round((dailySeconds.get(key) || 0) / 3600 * 10) / 10 });
+        }
+
+        return {
+            topTracks,
+            totalPlays,
+            uniqueTracks: trackMap.size,
+            listeningDays: daySet.size,
+            currentStreak,
+            longestStreak,
+            dailyHours,
+        };
     }
 
     async toggleFavorite(type: 'track' | 'album' | 'artist', item: Track | Album | Artist): Promise<boolean> {
@@ -364,6 +483,101 @@ class MusicDatabase {
             const req = store.get(id);
             req.onsuccess = () => { db.close(); resolve(req.result?.blob || null); };
             req.onerror = () => { db.close(); reject(req.error); };
+        });
+    }
+
+    // === Local Files ===
+
+    async addLocalFile(file: File): Promise<import('../types').LocalTrack> {
+        const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const title = file.name.replace(/\.[^.]+$/, '');
+        const record = {
+            id,
+            title,
+            artist: '',
+            album: '',
+            duration: 0,
+            fileBlob: file,
+            fileName: file.name,
+            mimeType: file.type,
+            addedAt: new Date().toISOString(),
+            fileSize: file.size,
+        };
+
+        // Try to get duration
+        try {
+            const url = URL.createObjectURL(file);
+            const audio = new Audio();
+            await new Promise<void>((resolve) => {
+                audio.onloadedmetadata = () => {
+                    record.duration = audio.duration || 0;
+                    URL.revokeObjectURL(url);
+                    resolve();
+                };
+                audio.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+                audio.src = url;
+            });
+        } catch {}
+
+        const db = await openDB();
+        const tx = db.transaction('local_files', 'readwrite');
+        tx.objectStore('local_files').put(record);
+        await new Promise<void>((resolve, reject) => {
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+        });
+
+        return record as import('../types').LocalTrack;
+    }
+
+    async getLocalFiles(): Promise<import('../types').LocalTrack[]> {
+        const db = await openDB();
+        const tx = db.transaction('local_files', 'readonly');
+        const store = tx.objectStore('local_files');
+
+        return new Promise((resolve, reject) => {
+            const req = store.getAll();
+            req.onsuccess = () => { db.close(); resolve(req.result || []); };
+            req.onerror = () => { db.close(); reject(req.error); };
+        });
+    }
+
+    async deleteLocalFile(id: string): Promise<void> {
+        const db = await openDB();
+        const tx = db.transaction('local_files', 'readwrite');
+        tx.objectStore('local_files').delete(id);
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+        });
+    }
+
+    async getLocalFileBlob(id: string): Promise<Blob | null> {
+        const db = await openDB();
+        const tx = db.transaction('local_files', 'readonly');
+        const store = tx.objectStore('local_files');
+        return new Promise((resolve, reject) => {
+            const req = store.get(id);
+            req.onsuccess = () => { db.close(); resolve(req.result?.fileBlob || null); };
+            req.onerror = () => { db.close(); reject(req.error); };
+        });
+    }
+
+    async updateLocalFile(id: string, updates: Partial<import('../types').LocalTrack>): Promise<void> {
+        const db = await openDB();
+        const tx = db.transaction('local_files', 'readwrite');
+        const store = tx.objectStore('local_files');
+        const existing = await new Promise<any | undefined>((resolve) => {
+            const req = store.get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => resolve(undefined);
+        });
+        if (existing) {
+            store.put({ ...existing, ...updates });
+        }
+        return new Promise((resolve, reject) => {
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
         });
     }
 }

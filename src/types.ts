@@ -8,6 +8,8 @@ export type RepeatMode = typeof REPEAT_MODE[keyof typeof REPEAT_MODE];
 
 export const MUSIC_PROVIDERS = {
     YOUTUBE: 'youtube',
+    JAMENDO: 'jamendo',
+    INTERNET_ARCHIVE: 'internet_archive',
 } as const;
 
 export type MusicProvider = typeof MUSIC_PROVIDERS[keyof typeof MUSIC_PROVIDERS];
@@ -88,6 +90,20 @@ export interface Mix {
     subtitle?: string;
     cover?: string;
     tracks?: Track[];
+}
+
+export interface LocalTrack {
+    id: string;
+    title: string;
+    artist?: string;
+    album?: string;
+    cover?: string;
+    duration: number;
+    fileBlob: Blob;
+    fileName: string;
+    mimeType: string;
+    addedAt: string;
+    fileSize: number;
 }
 
 export interface SearchResult {

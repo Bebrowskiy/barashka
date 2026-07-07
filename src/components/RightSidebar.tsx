@@ -1,4 +1,4 @@
-import { Heart, MoreHorizontal, Play, Pause, ListPlus, Radio, X } from 'lucide-react';
+import { Heart, Play, ListPlus, Radio, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePlayer } from '../context/PlayerContext';
 import { useI18n } from '../lib/i18n';

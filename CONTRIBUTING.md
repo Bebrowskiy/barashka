@@ -45,6 +45,19 @@ npm run build
 npm run lint
 ```
 
+### Testing
+
+```bash
+# Run tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
 ---
 
 ## Pull Request Process
@@ -54,9 +67,14 @@ npm run lint
    npm run lint
    ```
 
-2. **Test your changes** thoroughly
+2. **Run the test suite**:
+   ```bash
+   npm run test
+   ```
 
-3. **Create a Pull Request** with:
+3. **Test your changes** thoroughly
+
+4. **Create a Pull Request** with:
    - Clear title and description
    - Reference to related issues
    - Screenshots (for UI changes)
@@ -70,14 +88,47 @@ npm run lint
 barashka/
 ├── src/                        # React + TypeScript application
 │   ├── components/             # React UI components
+│   │   ├── MainView.tsx        # Home / search
+│   │   ├── Sidebar.tsx         # Navigation sidebar
+│   │   ├── Player.tsx          # Bottom player bar
+│   │   ├── FullscreenPlayer.tsx
+│   │   ├── Visualizer.tsx      # Audio visualizer
+│   │   ├── LibraryView.tsx     # Library (playlists, favorites)
+│   │   ├── PlaylistView.tsx    # Playlist detail
+│   │   ├── ArtistView.tsx      # Artist page
+│   │   ├── LocalFilesView.tsx  # Local file management
+│   │   ├── HistoryView.tsx     # Listening history
+│   │   ├── SettingsView.tsx    # Settings
+│   │   ├── AudioPanel.tsx      # Audio effects panel
+│   │   ├── ContextMenu.tsx     # Right-click menu
+│   │   └── ...
 │   ├── context/                # React contexts (player state)
+│   │   └── PlayerContext.tsx    # Global player state
 │   └── lib/                    # Services, API clients, utilities
+│       ├── audio-engine.ts     # Playback engine
+│       ├── equalizer.ts        # Configurable equalizer (3-32 bands)
+│       ├── crossfade.ts        # Crossfade manager
+│       ├── music-api.ts        # Unified music API client
+│       ├── youtube-api.ts      # YouTube provider (Piped)
+│       ├── jamendo-api.ts      # Jamendo provider
+│       ├── internet-archive-api.ts
+│       ├── deezer-api.ts       # Deezer artist enrichment
+│       ├── download-service.ts # Track download + conversion
+│       ├── ffmpeg-service.ts   # FFmpeg WebAssembly
+│       ├── sleep-timer.ts      # Sleep timer
+│       ├── db.ts               # IndexedDB CRUD
+│       ├── scrobbler.ts        # Scrobbling router
+│       ├── lyrics-api.ts       # LRCLib lyrics
+│       ├── genius-api.ts       # Genius annotations
+│       └── ...
 ├── src-tauri/                  # Tauri desktop app (Rust)
 ├── android/                    # Capacitor Android project
 ├── ios/                        # Capacitor iOS project
 ├── public/                     # Static assets
 ├── vite.config.ts              # Vite build config
-└── tsconfig.json               # TypeScript config
+├── tsconfig.json               # TypeScript config
+├── vitest.config.ts            # Test config
+└── package.json
 ```
 
 ### Key Directories
@@ -94,6 +145,7 @@ barashka/
 - **Tailwind CSS 4** — Utility-first CSS
 - **Vite 6** — Build tool and dev server
 - **Motion** — Animations
+- **FFmpeg (WASM)** — Audio conversion
 - **IndexedDB** — Client-side storage
 
 ---
@@ -114,6 +166,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `refactor`: Code refactoring
 - `perf`: Performance improvements
 - `chore`: Maintenance tasks
+- `test`: Adding or updating tests
 
 ### Examples
 
@@ -121,6 +174,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 feat(player): add crossfade between tracks
 fix(search): resolve query parsing issue
 docs(readme): update installation instructions
+test(equalizer): add band gain tests
 ```
 
 ---

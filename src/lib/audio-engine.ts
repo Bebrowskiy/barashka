@@ -17,7 +17,6 @@ export interface PlayerState {
     duration: number;
     volume: number;
     isMuted: boolean;
-    isWaveMode: boolean;
     quality: QualityPreset;
     playbackSpeed: number;
     preservePitch: boolean;
@@ -35,7 +34,6 @@ class AudioEngine {
     private _quality: QualityPreset = 'HI_RES_LOSSLESS' as QualityPreset;
     private savedVolumeBeforeMute: number = 0.7;
     private crossfade: CrossfadeManager;
-    private monoMergerNode: ChannelMergerNode | null = null;
 
     constructor() {
         this.audio = document.getElementById('audio-player') as HTMLAudioElement || this.createAudioElement();
@@ -57,7 +55,6 @@ class AudioEngine {
             duration: 0,
             volume: storedVolume,
             isMuted: storedVolume === 0,
-            isWaveMode: false,
             quality: storedQuality,
             playbackSpeed: fx.speed,
             preservePitch: fx.preservePitch,
@@ -83,7 +80,6 @@ class AudioEngine {
     private createAudioElement(): HTMLAudioElement {
         const audio = document.createElement('audio');
         audio.id = 'audio-player';
-        audio.crossOrigin = 'anonymous';
         document.body.prepend(audio);
         return audio;
     }
@@ -199,7 +195,7 @@ class AudioEngine {
                 playbackRate: this.audio.playbackRate || 1,
                 position: Math.min(this.audio.currentTime, duration),
             });
-        } catch (e) {
+        } catch {
             // Ignore
         }
     }
@@ -285,28 +281,6 @@ class AudioEngine {
         this.audio.volume = effectiveVolume;
     }
 
-    applyMonoAudio(): void {
-        const enhancements = audioEnhancementsSettings.get();
-        const ctx = equalizer.getAudioContext();
-        if (!ctx) return;
-
-        if (enhancements.monoAudio && !this.monoMergerNode) {
-            try {
-                this.monoMergerNode = ctx.createChannelMerger(1);
-                const splitter = ctx.createChannelSplitter(2);
-                this.audio.addEventListener('play', () => {
-                    if (!this.monoMergerNode) return;
-                    try {
-                        splitter.connect(this.monoMergerNode, 0, 0);
-                        splitter.connect(this.monoMergerNode, 1, 0);
-                    } catch {}
-                }, { once: true });
-            } catch {}
-        } else if (!enhancements.monoAudio) {
-            this.monoMergerNode = null;
-        }
-    }
-
     setVolume(value: number): void {
         const enhancements = audioEnhancementsSettings.get();
         let clamped = Math.max(0, Math.min(1, value));
@@ -376,7 +350,7 @@ class AudioEngine {
         let streamUrl = track.audioUrl || track.remoteUrl;
 
         if (!streamUrl) {
-            const isProviderTrack = String(track.id).startsWith('q:') || String(track.id).startsWith('y:') || String(track.id).startsWith('t:');
+            const isProviderTrack = String(track.id).startsWith('q:') || String(track.id).startsWith('y:') || String(track.id).startsWith('t:') || String(track.id).startsWith('j:') || String(track.id).startsWith('ia:');
             if (isProviderTrack) {
                 if (this.preloadCache.has(track.id)) {
                     streamUrl = this.preloadCache.get(track.id)!;
@@ -394,6 +368,9 @@ class AudioEngine {
         if (!streamUrl) {
             throw new Error('No stream URL available');
         }
+
+        // MediaElementAudioSourceNode (used by equalizer) requires CORS for all external sources
+        this.audio.crossOrigin = 'anonymous';
 
         this.audio.src = streamUrl;
         this.audio.preload = 'auto';
@@ -417,7 +394,7 @@ class AudioEngine {
         const searchResult = await musicAPI.searchTracks(query, { limit: 5 });
         const match = searchResult.items.find(t => {
             const tTitle = (t.title || '').toLowerCase();
-            const tArtist = (t.artist || '').toLowerCase();
+            const _tArtist = (t.artist || '').toLowerCase();
             return tTitle.includes(title.toLowerCase().slice(0, 10)) ||
                    title.toLowerCase().includes(tTitle.slice(0, 10));
         }) || searchResult.items[0];
@@ -431,6 +408,7 @@ class AudioEngine {
 
     private async safePlay(): Promise<void> {
         try {
+            equalizer.resumeContext();
             await this.audio.play();
         } catch (error: any) {
             if (error.name === 'NotAllowedError') {
@@ -500,7 +478,7 @@ class AudioEngine {
         try {
             let streamUrl = nextTrack.audioUrl || nextTrack.remoteUrl;
             if (!streamUrl) {
-                const isProviderTrack = String(nextTrack.id).startsWith('q:') || String(nextTrack.id).startsWith('y:') || String(nextTrack.id).startsWith('t:');
+                const isProviderTrack = String(nextTrack.id).startsWith('q:') || String(nextTrack.id).startsWith('y:') || String(nextTrack.id).startsWith('t:') || String(nextTrack.id).startsWith('j:') || String(nextTrack.id).startsWith('a:');
                 if (isProviderTrack) {
                     if (this.preloadCache.has(nextTrack.id)) {
                         streamUrl = this.preloadCache.get(nextTrack.id)!;
@@ -733,7 +711,6 @@ class AudioEngine {
             this.state.currentQueueIndex = -1;
         }
 
-        this.state.isWaveMode = false;
         this.preloadCache.clear();
         this.saveQueueState();
         this.updateState({});
@@ -749,7 +726,7 @@ class AudioEngine {
                 const track = queue[nextIndex];
                 if (track.id && !this.preloadCache.has(track.id) && !track.isLocal && !track.isTracker) {
                     try {
-                        const isProviderTrack = String(track.id).startsWith('q:') || String(track.id).startsWith('y:') || String(track.id).startsWith('t:');
+            const isProviderTrack = String(track.id).startsWith('q:') || String(track.id).startsWith('y:') || String(track.id).startsWith('t:') || String(track.id).startsWith('j:') || String(track.id).startsWith('ia:');
                         if (isProviderTrack) {
                             const streamUrl = await musicAPI.getStreamUrl(track.id, this.state.quality);
                             this.preloadCache.set(track.id, streamUrl);

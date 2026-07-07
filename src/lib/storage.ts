@@ -1,4 +1,4 @@
-import { type QualityPreset, type MusicProvider, type RepeatMode } from '../types';
+import { type QualityPreset, type MusicProvider } from '../types';
 
 interface StorageOptions<T> {
     key: string;
@@ -110,6 +110,18 @@ export const sidebarSettings = createSetting<{
 export const musicProviderSettings = createSetting<MusicProvider>({
     key: 'barashka-music-provider',
     defaultValue: 'youtube' as MusicProvider,
+});
+
+// Jamendo settings
+export const jamendoSettings = createSetting<{
+    clientId: string;
+    audioFormat: 'mp31' | 'mp32' | 'ogg' | 'flac';
+}>({
+    key: 'barashka-jamendo',
+    defaultValue: {
+        clientId: '',
+        audioFormat: 'mp32',
+    },
 });
 
 // Download settings

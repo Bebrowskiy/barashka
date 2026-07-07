@@ -9,13 +9,25 @@
     <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <base href="/" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="apple-touch-icon" href="/assets/logo.svg" />
-    <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/logo.svg" />
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
   </head>
   <body>
-    <audio id="audio-player" crossorigin="anonymous"></audio>
+    <script>
+      // SPA redirect from 404.html
+      (function(l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <audio id="audio-player"></audio>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

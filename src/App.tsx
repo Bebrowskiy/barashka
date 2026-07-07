@@ -1,24 +1,35 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, Suspense, lazy } from 'react';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 import MainView from './components/MainView';
-import RightSidebar from './components/RightSidebar';
-import ArtistView from './components/ArtistView';
-import LibraryView from './components/LibraryView';
-import PlaylistView from './components/PlaylistView';
-import SettingsView from './components/SettingsView';
-import CreatePlaylistModal from './components/CreatePlaylistModal';
-import AboutModal from './components/AboutModal';
-import AudioPanel from './components/AudioPanel';
-import FullscreenPlayer from './components/FullscreenPlayer';
-import SyncModal from './components/SyncModal';
-import HistoryView from './components/HistoryView';
-import ProfileView from './components/ProfileView';
-import ProfileEditModal from './components/ProfileEditModal';
 import { usePlayer } from './context/PlayerContext';
 import { AnimatePresence, motion } from 'motion/react';
 import { useKeyboardShortcuts } from './lib/keyboard-shortcuts';
 import { audioEngine } from './lib/audio-engine';
+
+const RightSidebar = lazy(() => import('./components/RightSidebar'));
+const ArtistView = lazy(() => import('./components/ArtistView'));
+const LibraryView = lazy(() => import('./components/LibraryView'));
+const PlaylistView = lazy(() => import('./components/PlaylistView'));
+const SettingsView = lazy(() => import('./components/SettingsView'));
+const CreatePlaylistModal = lazy(() => import('./components/CreatePlaylistModal'));
+const AboutModal = lazy(() => import('./components/AboutModal'));
+const AudioPanel = lazy(() => import('./components/AudioPanel'));
+const FullscreenPlayer = lazy(() => import('./components/FullscreenPlayer'));
+const SyncModal = lazy(() => import('./components/SyncModal'));
+const HistoryView = lazy(() => import('./components/HistoryView'));
+const ProfileView = lazy(() => import('./components/ProfileView'));
+const ProfileEditModal = lazy(() => import('./components/ProfileEditModal'));
+const LocalFilesView = lazy(() => import('./components/LocalFilesView'));
+const ShortcutsModal = lazy(() => import('./components/ShortcutsModal'));
+
+function ViewLoader() {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,6 +37,7 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [profileRefreshKey, setProfileRefreshKey] = useState(0);
   const homeKeyRef = useRef(0);
   const {
@@ -33,7 +45,7 @@ export default function App() {
     isAudioPanelOpen, setIsAudioPanelOpen,
     isFullscreen, setIsFullscreen,
     isQueueOpen, setIsQueueOpen,
-    togglePlay, setVolume,
+    togglePlay,
   } = usePlayer();
 
   // Auto-detect sync import from URL hash
@@ -62,6 +74,7 @@ export default function App() {
   const handleToggleLyrics = useCallback(() => {
     if (!isFullscreen) setIsFullscreen(true);
   }, [isFullscreen, setIsFullscreen]);
+  const handleShowShortcuts = useCallback(() => setIsShortcutsOpen(true), []);
 
   useKeyboardShortcuts({
     togglePlay: handleTogglePlay,
@@ -75,6 +88,7 @@ export default function App() {
     toggleFullscreen: handleToggleFullscreen,
     toggleQueue: handleToggleQueue,
     toggleLyrics: handleToggleLyrics,
+    showShortcuts: handleShowShortcuts,
   });
 
   return (
@@ -94,33 +108,41 @@ export default function App() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 relative h-full">
-        {showHistory ? (
-          <HistoryView onBack={() => setShowHistory(false)} />
-        ) : showProfile ? (
-          <ProfileView onBack={() => setShowProfile(false)} onEditProfile={() => setIsProfileEditOpen(true)} refreshKey={profileRefreshKey} />
-        ) : activeView === 'home' ? (
-          <MainView resetKey={homeKeyRef.current++} onMenuClick={() => setIsMobileMenuOpen(true)} onOpenHistory={() => setShowHistory(true)} />
-        ) : activeView === 'library' ? (
-          <LibraryView onMenuClick={() => setIsMobileMenuOpen(true)} />
-        ) : activeView === 'playlist' ? (
-          <PlaylistView onMenuClick={() => setIsMobileMenuOpen(true)} />
-        ) : activeView === 'settings' ? (
-          <SettingsView onMenuClick={() => setIsMobileMenuOpen(true)} onSyncOpen={() => setIsSyncOpen(true)} onOpenProfile={() => setShowProfile(true)} />
-        ) : (
-          <ArtistView onMenuClick={() => setIsMobileMenuOpen(true)} />
-        )}
+        <Suspense fallback={<ViewLoader />}>
+          {showHistory ? (
+            <HistoryView onBack={() => setShowHistory(false)} />
+          ) : showProfile ? (
+            <ProfileView onBack={() => setShowProfile(false)} onEditProfile={() => setIsProfileEditOpen(true)} refreshKey={profileRefreshKey} />
+          ) : activeView === 'home' ? (
+            <MainView resetKey={homeKeyRef.current++} onMenuClick={() => setIsMobileMenuOpen(true)} onOpenHistory={() => setShowHistory(true)} />
+          ) : activeView === 'library' ? (
+            <LibraryView onMenuClick={() => setIsMobileMenuOpen(true)} />
+          ) : activeView === 'playlist' ? (
+            <PlaylistView onMenuClick={() => setIsMobileMenuOpen(true)} />
+          ) : activeView === 'settings' ? (
+            <SettingsView onMenuClick={() => setIsMobileMenuOpen(true)} onSyncOpen={() => setIsSyncOpen(true)} onOpenProfile={() => setShowProfile(true)} />
+          ) : activeView === 'local' ? (
+            <LocalFilesView onMenuClick={() => setIsMobileMenuOpen(true)} />
+          ) : (
+            <ArtistView onMenuClick={() => setIsMobileMenuOpen(true)} />
+          )}
+        </Suspense>
         <Player />
       </div>
       <div className="hidden 2xl:flex h-full">
-        <RightSidebar />
+        <Suspense fallback={null}>
+          <RightSidebar />
+        </Suspense>
       </div>
 
-      <CreatePlaylistModal />
-      <AboutModal />
-      <AudioPanel isOpen={isAudioPanelOpen} onClose={() => setIsAudioPanelOpen(false)} />
-      <FullscreenPlayer />
-      <SyncModal isOpen={isSyncOpen} onClose={() => setIsSyncOpen(false)} />
-      <ProfileEditModal isOpen={isProfileEditOpen} onClose={() => setIsProfileEditOpen(false)} onSaved={() => setProfileRefreshKey(k => k + 1)} />
+      <Suspense fallback={null}>
+        <CreatePlaylistModal />
+        <AboutModal />
+        <AudioPanel isOpen={isAudioPanelOpen} onClose={() => setIsAudioPanelOpen(false)} />
+        <FullscreenPlayer />
+        <SyncModal isOpen={isSyncOpen} onClose={() => setIsSyncOpen(false)} />
+        <ProfileEditModal isOpen={isProfileEditOpen} onClose={() => setIsProfileEditOpen(false)} onSaved={() => setProfileRefreshKey(k => k + 1)} />
+      </Suspense>
 
       {/* Global Toast */}
       <AnimatePresence>
@@ -135,6 +157,10 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Suspense fallback={null}>
+        <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      </Suspense>
     </div>
   );
 }

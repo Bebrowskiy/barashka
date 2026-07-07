@@ -40,7 +40,7 @@ async function getFFmpeg(): Promise<FFmpeg> {
     ffmpegLoading = true;
     ffmpegInstance = new FFmpeg();
 
-    ffmpegInstance.on('progress', ({ progress }) => {
+    ffmpegInstance.on('progress', ({ progress: _progress }) => {
         // Progress events handled per-call
     });
 

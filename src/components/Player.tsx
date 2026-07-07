@@ -1,5 +1,4 @@
 import type React from 'react';
-import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1, Volume2, VolumeX, SlidersHorizontal, Maximize2, ListMusic, Heart, Download, Share2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
@@ -25,7 +24,6 @@ export default function Player() {
         currentTime,
         duration,
         seekTo,
-        queue,
     } = usePlayer();
     const { t } = useI18n();
 
@@ -272,21 +270,31 @@ export default function Player() {
 }
 
 function QualityBadge({ quality }: { quality: string }) {
-    let label = '';
-    let color = '';
-
     if (quality.startsWith('y:')) {
-        label = 'YouTube';
-        color = 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
-    } else {
-        return null;
+        return (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20">
+                YouTube
+            </span>
+        );
     }
 
-    return (
-        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${color}`}>
-            {label}
-        </span>
-    );
+    if (quality.startsWith('j:')) {
+        return (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">
+                Jamendo
+            </span>
+        );
+    }
+
+    if (quality.startsWith('ia:')) {
+        return (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+                Archive
+            </span>
+        );
+    }
+
+    return null;
 }
 
 function formatTime(seconds: number): string {

@@ -9,7 +9,7 @@ import type { Track } from '../types';
 export default function PlaylistView({ onMenuClick }: { onMenuClick?: () => void }) {
     const { t } = useI18n();
     const {
-        selectedPlaylist, setActiveView, playTrack, currentTrack, isPlaying,
+        selectedPlaylist, setActiveView, _playTrack, currentTrack, isPlaying,
         likedTracks, toggleLike, showToast, openArtist, playTrackWithQueue,
         removeTrackFromPlaylist, deletePlaylist, updatePlaylist,
     } = usePlayer();
@@ -390,7 +390,7 @@ function AddTracksModal({ playlistId, existingTrackIds, onClose }: {
     onClose: () => void;
 }) {
     const { t } = useI18n();
-    const { addTrackToPlaylist, showToast, playTrackWithQueue } = usePlayer();
+    const { addTrackToPlaylist, showToast, _playTrackWithQueue } = usePlayer();
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Track[]>([]);
     const [loading, setLoading] = useState(false);

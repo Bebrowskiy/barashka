@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, Heart, Plus, ListPlus, Share2, Download, ExternalLink, Ban, Copy, ListMusic } from 'lucide-react';
+import { Play, Heart, Plus, ListPlus, Share2, Download, ExternalLink, Ban, Copy, ListMusic } from 'lucide-react';
 import type { Track } from '../types';
 import { useI18n } from '../lib/i18n';
 import { shareService } from '../lib/share-service';
@@ -89,35 +89,41 @@ export default function ContextMenu({
             action: () => { onAddToPlaylist(track); onClose(); },
         }] : []),
         { icon: null, label: '', action: () => {} }, // separator
-        {
-            icon: <Share2 className="w-4 h-4" />,
-            label: t('ctx-share'),
-            action: () => { shareService.shareTrack(track); onClose(); },
-        },
-        {
-            icon: <Download className="w-4 h-4" />,
-            label: t('ctx-download'),
-            action: () => { downloadService.downloadTrack(track); onClose(); },
-        },
-        { icon: null, label: '', action: () => {} }, // separator
-        {
-            icon: <ExternalLink className="w-4 h-4" />,
-            label: t('ctx-open-original'),
-            action: () => {
-                if (track.id.startsWith('y:')) {
-                    window.open(`https://music.youtube.com/watch?v=${track.id.slice(2)}`, '_blank');
-                }
-                onClose();
+        ...(track.isLocal ? [] : [
+            {
+                icon: <Share2 className="w-4 h-4" />,
+                label: t('ctx-share'),
+                action: () => { shareService.shareTrack(track); onClose(); },
             },
-        },
-        {
-            icon: <Copy className="w-4 h-4" />,
-            label: t('ctx-copy-id'),
-            action: () => {
-                navigator.clipboard.writeText(track.id);
-                onClose();
+            {
+                icon: <Download className="w-4 h-4" />,
+                label: t('ctx-download'),
+                action: () => { downloadService.downloadTrack(track); onClose(); },
             },
-        },
+            { icon: null, label: '', action: () => {} }, // separator
+            {
+                icon: <ExternalLink className="w-4 h-4" />,
+                label: t('ctx-open-original'),
+                action: () => {
+                    if (track.id.startsWith('y:')) {
+                        window.open(`https://music.youtube.com/watch?v=${track.id.slice(2)}`, '_blank');
+                    } else if (track.id.startsWith('j:')) {
+                        window.open(`https://www.jamendo.com/track/${track.id.slice(2)}`, '_blank');
+                    } else if (track.id.startsWith('ia:')) {
+                        window.open(`https://archive.org/details/${track.id.slice(3)}`, '_blank');
+                    }
+                    onClose();
+                },
+            },
+            {
+                icon: <Copy className="w-4 h-4" />,
+                label: t('ctx-copy-id'),
+                action: () => {
+                    navigator.clipboard.writeText(track.id);
+                    onClose();
+                },
+            },
+        ]),
     ];
 
     if (onGoToArtist && track.artist) {

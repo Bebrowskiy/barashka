@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Bell, Clock, Play, Pause, Heart, Menu, Loader2, RefreshCw, Music, Disc, User, X, History } from 'lucide-react';
+import { Search, Clock, Play, Pause, Heart, Menu, Loader2, RefreshCw, Music, Disc, User, X, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePlayer } from '../context/PlayerContext';
 import { musicAPI } from '../lib/music-api';
@@ -20,7 +20,7 @@ interface MainViewProps {
 export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainViewProps) {
     const {
         currentTrack,
-        isPlaying, togglePlay,
+        isPlaying,
         likedTracks, toggleLike,
         activeMix, toggleMix,
         openArtist,
@@ -29,11 +29,9 @@ export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainV
         playTrackWithQueue,
         addToQueue,
         addNextToQueue,
-        setIsCreatePlaylistOpen,
     } = usePlayer();
     const { t } = useI18n();
 
-    const [recentTracks, setRecentTracks] = useState<Track[]>([]);
     const [mixTracks, setMixTracks] = useState<Track[]>([]);
     const [mixLoading, setMixLoading] = useState(false);
     const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
@@ -72,12 +70,6 @@ export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainV
         setLoadingTracks(true);
         setLoadingAlbums(true);
         setLoadingArtists(true);
-
-        // Load history for mix seeds
-        try {
-            const history = await db.getHistory(20);
-            setRecentTracks(history.slice(0, 10));
-        } catch {}
 
         // Load recommended tracks
         try {
@@ -119,19 +111,33 @@ export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainV
 
         setMixLoading(true);
         try {
-            // Get seeds from history
-            const history = await db.getHistory(10);
+            const history = await db.getHistory(20);
             let tracks: Track[] = [];
 
             if (history.length > 0) {
-                // Try to get recommendations based on history
-                const seedTrack = history[0];
-                try {
-                    const recs = await musicAPI.getTrackRecommendations(seedTrack.id);
-                    if (recs.length > 0) {
-                        tracks = recs;
+                // Get recommendations from top 3 unique artist tracks
+                const seen = new Set<string>();
+                const seeds = history.filter(t => {
+                    if (seen.has(t.artist || '')) return false;
+                    seen.add(t.artist || '');
+                    return true;
+                }).slice(0, 3);
+
+                const allRecs = await Promise.allSettled(
+                    seeds.map(s => musicAPI.getTrackRecommendations(s.id))
+                );
+
+                const idSet = new Set<string>();
+                for (const result of allRecs) {
+                    if (result.status === 'fulfilled') {
+                        for (const t of result.value) {
+                            if (!idSet.has(t.id)) {
+                                idSet.add(t.id);
+                                tracks.push(t);
+                            }
+                        }
                     }
-                } catch {}
+                }
             }
 
             // Fallback: search for popular/relaxing music
@@ -140,6 +146,12 @@ export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainV
                 const query = queries[Math.floor(Math.random() * queries.length)];
                 const result = await musicAPI.searchTracks(query, { limit: 20 });
                 tracks = result.items;
+            }
+
+            // Shuffle
+            for (let i = tracks.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
             }
 
             if (tracks.length > 0) {
@@ -299,16 +311,6 @@ export default function MainView({ onMenuClick, onOpenHistory, resetKey }: MainV
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
-
-                <div className="flex items-center flex-shrink-0">
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => showToast("No new notifications")} className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-white/5 border border-slate-100 dark:border-white/[0.05] flex items-center justify-center hover:bg-slate-50 dark:hover:bg-white/10 hover:shadow-sm dark:hover:shadow-none transition-all focus:outline-none">
-                        <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3.5 w-2 flex h-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full w-2 h-2 bg-rose-500"></span>
-                        </div>
-                    </motion.button>
                 </div>
             </header>
 

@@ -6,14 +6,10 @@ import { db } from '../lib/db';
 import type { Track } from '../types';
 
 export default function HistoryView({ onBack }: { onBack: () => void }) {
-    const { t } = useI18n();
-    const { currentTrack, isPlaying, playTrack, playTrackWithQueue } = usePlayer();
+    const { t: _t } = useI18n();
+    const { currentTrack, isPlaying, playTrackWithQueue } = usePlayer();
     const [history, setHistory] = useState<Track[]>([]);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        loadHistory();
-    }, []);
 
     const loadHistory = async () => {
         setLoading(true);
@@ -26,6 +22,10 @@ export default function HistoryView({ onBack }: { onBack: () => void }) {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        loadHistory();
+    }, []);
 
     const clearHistory = async () => {
         if (!confirm('Clear all listening history?')) return;

@@ -9,8 +9,11 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build & Release
+  # ============================================================================
+  # Job 1: Build web frontend
+  # ============================================================================
+  build-web:
+    name: Build Web
     runs-on: ubuntu-latest
 
     steps:
@@ -37,10 +40,73 @@ jobs:
       - name: Package dist
         run: zip -r dist.zip dist/
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
         with:
-          generate_release_notes: true
-          files: dist.zip
-          draft: false
+          name: dist
+          path: dist.zip
+          retention-days: 1
+
+  # ============================================================================
+  # Job 2: Build Tauri desktop apps (matrix: Windows, macOS, Linux)
+  # ============================================================================
+  build-desktop:
+    name: Desktop (${{ matrix.platform }})
+    needs: build-web
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            targets: 'msi,nsis'
+          - platform: macos-latest
+            targets: 'dmg,app'
+          - platform: ubuntu-22.04
+            targets: 'deb,appimage'
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Barashka ${{ github.ref_name }}'
+          releaseBody: 'See the assets below for downloadable installers.'
+          releaseDraft: false
           prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') || contains(github.ref, '-alpha') }}
+          targets: ${{ matrix.targets }}
+
+  # ============================================================================
+  # Job 3: Upload web dist to the release created by tauri-action
+  # ============================================================================
+  upload-web-dist:
+    name: Upload Web Dist
+    needs: [build-web, build-desktop]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Upload dist.zip to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" dist.zip --clobber

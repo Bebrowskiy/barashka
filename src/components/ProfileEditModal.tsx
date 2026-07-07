@@ -29,7 +29,7 @@ interface ProfileEditModalProps {
 type AvatarTab = 'preset' | 'url' | 'upload';
 
 export default function ProfileEditModal({ isOpen, onClose, onSaved }: ProfileEditModalProps) {
-    const { t } = useI18n();
+    const { t: _t } = useI18n();
     const { showToast } = usePlayer();
     const [profile, setProfile] = useState(profileSettings.get());
     const [avatarPreview, setAvatarPreview] = useState(profile.avatar);

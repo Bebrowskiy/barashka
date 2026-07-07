@@ -1,4 +1,4 @@
-import type { Track, Album, Artist, SearchResult } from '../types';
+import type { Track, Artist, SearchResult } from '../types';
 
 const PIPED_INSTANCES = [
     'https://api.piped.private.coffee',
@@ -215,7 +215,7 @@ class YouTubeAPI {
             const limit = options.limit || 10;
             const data = await this.fetchJSON('/search', { q: cleanQuery, filter: 'music_songs' }, { signal: options.signal });
 
-            const items = (data.items || []).slice(0, limit).map((item: any, index: number) => {
+            const items = (data.items || []).slice(0, limit).map((item: any, _index: number) => {
                 const track = this.transformTrack(item);
                 return track;
             }).filter(Boolean) as Track[];
@@ -729,7 +729,7 @@ class YouTubeAPI {
         } catch (error: any) {
             if (error instanceof PipedError && error.isBotDetected()) {
                 logger.log('error', 'youtube', `Bot detection for ${cleanId}: ${error.message}`);
-                throw new Error('YouTube blocked anonymous access. Try again later or use a different provider.');
+                throw new Error('YouTube blocked anonymous access. Try again later or use a different provider.', { cause: error });
             }
             throw error;
         }
