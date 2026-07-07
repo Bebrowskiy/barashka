@@ -181,7 +181,6 @@ class MusicDatabase {
             .slice(0, 10);
 
         // Calculate streaks
-        const sortedDays = [...daySet].sort();
         let currentStreak = 0;
         let longestStreak = 0;
         let streak = 0;

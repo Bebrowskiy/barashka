@@ -47,7 +47,7 @@ const PROVIDERS = [
 ] as const;
 
 export default function SettingsView({ onMenuClick, onSyncOpen, onOpenProfile }: { onMenuClick?: () => void; onSyncOpen?: () => void; onOpenProfile?: () => void }) {
-    const { showToast, setActiveView, theme, setTheme, quality, setQuality } = usePlayer();
+    const { showToast, theme, setTheme, quality, setQuality } = usePlayer();
     const { lang, setLang, t } = useI18n();
     const [activeTab, setActiveTab] = useState('Appearance');
     const [searchQuery, setSearchQuery] = useState('');

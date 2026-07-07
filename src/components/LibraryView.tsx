@@ -32,7 +32,7 @@ export default function LibraryView({ onMenuClick }: { onMenuClick?: () => void 
         [savedTracks, query]
     );
     const filteredAlbums = useMemo(() =>
-        query ? savedAlbums.filter(a => a.title.toLowerCase().includes(query) || (typeof a.artist === 'object' ? a.artist?.name : a.artist || '').toLowerCase().includes(query)) : savedAlbums,
+        query ? savedAlbums.filter(a => a.title.toLowerCase().includes(query) || (typeof a.artist === 'object' ? (a.artist?.name ?? '') : (a.artist ?? '')).toLowerCase().includes(query)) : savedAlbums,
         [savedAlbums, query]
     );
     const filteredArtists = useMemo(() =>

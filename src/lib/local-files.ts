@@ -3,18 +3,6 @@ import type { Track, LocalTrack } from '../types';
 
 const AUDIO_EXTENSIONS = ['mp3', 'flac', 'wav', 'ogg', 'm4a', 'aac', 'wma', 'opus'];
 
-function parseFileName(fileName: string): { title: string; artist: string } {
-    const name = fileName.replace(/\.[^.]+$/, '');
-
-    // Pattern: "Artist - Title"
-    const dashMatch = name.match(/^(.+?)\s*-\s*(.+)$/);
-    if (dashMatch) {
-        return { artist: dashMatch[1].trim(), title: dashMatch[2].trim() };
-    }
-
-    return { title: name, artist: '' };
-}
-
 function isAudioFile(file: File): boolean {
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
     if (AUDIO_EXTENSIONS.includes(ext)) return true;

@@ -1,6 +1,5 @@
 import type React from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'motion/react';
 import { Upload, Play, Pause, Music, Trash2, Plus, ListPlus, FolderOpen, Pencil } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { useI18n } from '../lib/i18n';
@@ -10,7 +9,7 @@ import EditLocalTrackModal from './EditLocalTrackModal';
 import type { Track } from '../types';
 
 export default function LocalFilesView({ onMenuClick }: { onMenuClick?: () => void }) {
-    const { currentTrack, isPlaying, openPlaylist, showToast, playTrackWithQueue, addToQueue, addNextToQueue } = usePlayer();
+    const { currentTrack, isPlaying, showToast, playTrackWithQueue, addToQueue, addNextToQueue } = usePlayer();
     const { t } = useI18n();
     const [tracks, setTracks] = useState<Track[]>([]);
     const [loading, setLoading] = useState(true);
